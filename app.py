@@ -1,232 +1,442 @@
-# ============================================================
-# 🍽️ RESTAURANT SALES ANALYTICS & ML INTELLIGENCE PLATFORM
-# Author: Aurangzeb
-# Level: Research / Gold Medalist / PhD-Grade
-# ============================================================
-
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 import plotly.express as px
-from pathlib import Path
+import plotly.graph_objects as go
 from datetime import datetime
+import os
 
-# ============================================================
-# ⚙️ PAGE CONFIGURATION
-# ============================================================
+# Page configuration
 st.set_page_config(
-    page_title="Restaurant Sales Intelligence",
-    page_icon="🏆",
+    page_title="Restaurant Sales Analytics",
+    page_icon="🍽️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ============================================================
-# 🎨 ADVANCED UI STYLING
-# ============================================================
+# Custom CSS
 st.markdown("""
-<style>
-.main-title {
-    font-size: 3rem;
-    font-weight: 800;
-    text-align: center;
-    background: linear-gradient(90deg, #1f77b4, #6f42c1);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-.subtitle {
-    text-align: center;
-    color: gray;
-    font-size: 1.1rem;
-}
-.card {
-    background: linear-gradient(135deg, #4e54c8, #8f94fb);
-    padding: 20px;
-    border-radius: 14px;
-    color: white;
-    text-align: center;
-}
-</style>
+    <style>
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #1f77b4;
+        text-align: center;
+        padding: 20px;
+    }
+    </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# 📁 FILE PATH MANAGEMENT
-# ============================================================
-BASE_DIR = Path(__file__).parent
-DATA_FILE = BASE_DIR / "restaurant_sales_cleaned.csv"
-MODEL_FILE = BASE_DIR / "models" / "xgboost_model.pkl"
-CAT_ENCODER_FILE = BASE_DIR / "models" / "category_encoder.pkl"
-PAY_ENCODER_FILE = BASE_DIR / "models" / "payment_encoder.pkl"
-
-# ============================================================
-# 🤖 LOAD MODEL & ENCODERS
-# ============================================================
-@st.cache_resource
-def load_ml_assets():
-    if not MODEL_FILE.exists():
-        return None, None, None, "Model file missing"
-    try:
-        model = joblib.load(MODEL_FILE)
-        le_category = joblib.load(CAT_ENCODER_FILE)
-        le_payment = joblib.load(PAY_ENCODER_FILE)
-        return model, le_category, le_payment, None
-    except Exception as e:
-        return None, None, None, str(e)
-
-model, le_category, le_payment, model_error = load_ml_assets()
-
-# ============================================================
-# 📊 LOAD DATASET
-# ============================================================
+# ===================================
+# FILE UPLOAD SECTION (IF FILES DON'T EXIST)
+# ===================================
 @st.cache_data
-def load_dataset():
-    if not DATA_FILE.exists():
-        return None, f"Dataset not found at: {DATA_FILE}"
-    try:
-        df = pd.read_csv(DATA_FILE)
-        df["order_date"] = pd.to_datetime(df["order_date"])
-        return df, None
-    except Exception as e:
-        return None, str(e)
+def load_data():
+    """Try to load data from multiple possible filenames"""
+    possible_filenames = [
+        'restaurant_sales_cleaned.csv',
+        'restaurant_sales_featured.csv',
+        'restaurant_sales.csv'
+    ]
+    
+    for filename in possible_filenames:
+        if os.path.exists(filename):
+            try:
+                df = pd.read_csv(filename)
+                # Ensure order_date is datetime
+                if 'order_date' in df.columns:
+                    df['order_date'] = pd.to_datetime(df['order_date'], errors='coerce')
+                
+                # Add time features if they don't exist
+                if 'order_date' in df.columns and 'hour' not in df.columns:
+                    df['day_of_week'] = df['order_date'].dt.dayofweek
+                    df['hour'] = df['order_date'].dt.hour
+                    df['month'] = df['order_date'].dt.month
+                    df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
+                
+                st.sidebar.success(f"✅ Loaded: {filename}")
+                return df
+            except Exception as e:
+                st.sidebar.error(f"Error loading {filename}: {e}")
+                continue
+    
+    return None
 
-df, data_error = load_dataset()
+# ===================================
+# MAIN APP
+# ===================================
+st.markdown('<p class="main-header">🍽️ Restaurant Sales Analytics System</p>', unsafe_allow_html=True)
 
-# ============================================================
-# 🏆 HEADER
-# ============================================================
-st.markdown("<div class='main-title'>Restaurant Sales Intelligence System</div>", unsafe_allow_html=True)
-st.markdown("<div class='subtitle'>A Nobel-Class Data Science & Machine Learning Platform</div>", unsafe_allow_html=True)
-st.markdown("---")
+# Try to load data
+df = load_data()
 
-# ============================================================
-# 📌 SIDEBAR NAVIGATION
-# ============================================================
-st.sidebar.header("📊 Control Panel")
-page = st.sidebar.radio(
-    "Select Module",
-    ["Executive Dashboard", "Data Science Lab", "AI Predictions", "Model Excellence"]
-)
+# If no data file found, show upload option
+if df is None:
+    st.warning("⚠️ No data file found. Please upload your CSV file.")
+    
+    st.info("""
+    **Looking for these files:**
+    - restaurant_sales_cleaned.csv
+    - restaurant_sales_featured.csv
+    - restaurant_sales.csv
+    
+    **Make sure your CSV file is in the same folder as this app.py file!**
+    """)
+    
+    uploaded_file = st.file_uploader("Upload your restaurant sales CSV file", type=['csv'])
+    
+    if uploaded_file is not None:
+        try:
+            df = pd.read_csv(uploaded_file)
+            
+            # Process the uploaded data
+            st.success(f"✅ File uploaded successfully! Shape: {df.shape}")
+            
+            # Show columns
+            st.write("**Columns in your data:**", list(df.columns))
+            
+            # Clean and process data
+            with st.spinner("Processing data..."):
+                # Handle missing values
+                if 'price' in df.columns:
+                    df['price'] = df.groupby('category')['price'].transform(
+                        lambda x: x.fillna(x.median())
+                    )
+                
+                if 'quantity' in df.columns:
+                    df['quantity'].fillna(df['quantity'].mode()[0], inplace=True)
+                
+                if 'order_total' in df.columns:
+                    df['order_total'] = df['price'] * df['quantity']
+                
+                # Convert date
+                if 'order_date' in df.columns:
+                    df['order_date'] = pd.to_datetime(df['order_date'], errors='coerce')
+                    df['day_of_week'] = df['order_date'].dt.dayofweek
+                    df['hour'] = df['order_date'].dt.hour
+                    df['month'] = df['order_date'].dt.month
+                    df['is_weekend'] = df['day_of_week'].isin([5, 6]).astype(int)
+                
+                st.success("✅ Data processed successfully!")
+            
+        except Exception as e:
+            st.error(f"Error reading file: {e}")
+            st.stop()
 
-st.sidebar.markdown("---")
-
+# ===================================
+# SIDEBAR
+# ===================================
 if df is not None:
-    st.sidebar.success("✅ Dataset Loaded")
-    st.sidebar.metric("Total Records", len(df))
+    st.sidebar.header("📊 Navigation")
+    page = st.sidebar.radio(
+        "Select Page",
+        ["Dashboard", "Data Analysis", "Make Predictions", "Data Table"]
+    )
+    
+    st.sidebar.markdown("---")
+    st.sidebar.info(f"""
+    **Data Overview**
+    
+    📊 Records: {len(df):,}
+    
+    📁 Columns: {len(df.columns)}
+    
+    📅 Date Range: {df['order_date'].min().date() if 'order_date' in df.columns else 'N/A'} to {df['order_date'].max().date() if 'order_date' in df.columns else 'N/A'}
+    """)
+
+    # ===================================
+    # PAGE 1: DASHBOARD
+    # ===================================
+    if page == "Dashboard":
+        st.header("📊 Sales Dashboard")
+        
+        # KPI Metrics
+        col1, col2, col3, col4 = st.columns(4)
+        
+        with col1:
+            total_revenue = df['order_total'].sum()
+            st.metric("💰 Total Revenue", f"${total_revenue:,.2f}")
+        
+        with col2:
+            total_orders = len(df)
+            st.metric("📦 Total Orders", f"{total_orders:,}")
+        
+        with col3:
+            avg_order = df['order_total'].mean()
+            st.metric("📈 Avg Order Value", f"${avg_order:.2f}")
+        
+        with col4:
+            unique_customers = df['customer_id'].nunique()
+            st.metric("👥 Unique Customers", f"{unique_customers:,}")
+        
+        st.markdown("---")
+        
+        # Charts Row 1
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("📊 Sales by Category")
+            category_sales = df.groupby('category')['order_total'].sum().reset_index()
+            category_sales = category_sales.sort_values('order_total', ascending=False)
+            
+            fig = px.bar(category_sales, x='category', y='order_total',
+                        color='order_total', 
+                        color_continuous_scale='Blues',
+                        labels={'order_total': 'Total Sales ($)', 'category': 'Category'})
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.subheader("💳 Payment Methods")
+            payment_counts = df['payment_method'].value_counts().reset_index()
+            payment_counts.columns = ['payment_method', 'count']
+            
+            fig = px.pie(payment_counts, values='count', names='payment_method',
+                        hole=0.4, color_discrete_sequence=px.colors.sequential.RdBu)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Charts Row 2
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("📅 Daily Sales Trend")
+            if 'order_date' in df.columns:
+                daily_sales = df.groupby(df['order_date'].dt.date)['order_total'].sum().reset_index()
+                daily_sales.columns = ['date', 'sales']
+                
+                fig = px.line(daily_sales, x='date', y='sales', markers=True)
+                fig.update_traces(line_color='#00CC96')
+                fig.update_layout(xaxis_title="Date", yaxis_title="Sales ($)")
+                st.plotly_chart(fig, use_container_width=True)
+            else:
+                st.info("Order date column not available")
+        
+        with col2:
+            st.subheader("💵 Price Distribution")
+            fig = px.histogram(df, x='price', nbins=30, 
+                             color_discrete_sequence=['#636EFA'])
+            fig.update_layout(xaxis_title="Price ($)", yaxis_title="Frequency")
+            st.plotly_chart(fig, use_container_width=True)
+        
+        # Top Items
+        st.subheader("🏆 Top 10 Best Selling Items")
+        top_items = df.groupby('item').agg({
+            'order_total': 'sum',
+            'order_id': 'count'
+        }).sort_values('order_total', ascending=False).head(10)
+        top_items.columns = ['Total Revenue', 'Number of Orders']
+        st.dataframe(top_items, use_container_width=True)
+
+    # ===================================
+    # PAGE 2: DATA ANALYSIS
+    # ===================================
+    elif page == "Data Analysis":
+        st.header("🔍 Exploratory Data Analysis")
+        
+        tab1, tab2, tab3 = st.tabs(["📊 Statistics", "📈 Visualizations", "🎯 Insights"])
+        
+        with tab1:
+            st.subheader("Basic Statistics")
+            st.dataframe(df.describe(), use_container_width=True)
+            
+            st.subheader("Category Analysis")
+            category_stats = df.groupby('category').agg({
+                'order_total': ['sum', 'mean', 'count'],
+                'price': 'mean',
+                'quantity': 'mean'
+            }).round(2)
+            st.dataframe(category_stats, use_container_width=True)
+            
+            st.subheader("Payment Method Analysis")
+            payment_stats = df.groupby('payment_method').agg({
+                'order_total': ['sum', 'mean', 'count']
+            }).round(2)
+            st.dataframe(payment_stats, use_container_width=True)
+        
+        with tab2:
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("Price vs Order Total")
+                sample_df = df.sample(min(1000, len(df)))
+                fig = px.scatter(sample_df, x='price', y='order_total',
+                               color='category', size='quantity',
+                               hover_data=['item'])
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                st.subheader("Quantity Distribution")
+                fig = px.histogram(df, x='quantity', nbins=20,
+                                 color_discrete_sequence=['#EF553B'])
+                st.plotly_chart(fig, use_container_width=True)
+            
+            if 'hour' in df.columns:
+                st.subheader("Orders by Hour of Day")
+                hourly_orders = df.groupby('hour')['order_id'].count().reset_index()
+                hourly_orders.columns = ['hour', 'orders']
+                
+                fig = px.bar(hourly_orders, x='hour', y='orders',
+                            color='orders', color_continuous_scale='Viridis')
+                fig.update_layout(xaxis_title="Hour of Day", yaxis_title="Number of Orders")
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with tab3:
+            st.subheader("🎯 Key Insights")
+            
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.info("**📊 Top Performing Category**")
+                top_category = df.groupby('category')['order_total'].sum().idxmax()
+                top_revenue = df.groupby('category')['order_total'].sum().max()
+                st.write(f"🏆 **{top_category}**")
+                st.write(f"Revenue: ${top_revenue:,.2f}")
+                
+                st.info("**💳 Most Popular Payment**")
+                top_payment = df['payment_method'].value_counts().idxmax()
+                payment_pct = (df['payment_method'].value_counts().iloc[0] / len(df)) * 100
+                st.write(f"💳 **{top_payment}**")
+                st.write(f"Usage: {payment_pct:.1f}%")
+            
+            with col2:
+                st.info("**💰 Price Range**")
+                st.write(f"Min: ${df['price'].min():.2f}")
+                st.write(f"Max: ${df['price'].max():.2f}")
+                st.write(f"Average: ${df['price'].mean():.2f}")
+                
+                st.info("**📦 Order Quantity**")
+                st.write(f"Average: {df['quantity'].mean():.2f}")
+                st.write(f"Most Common: {df['quantity'].mode()[0]}")
+
+    # ===================================
+    # PAGE 3: MAKE PREDICTIONS
+    # ===================================
+    elif page == "Make Predictions":
+        st.header("🤖 Predict Order Total")
+        
+        st.info("💡 **Simple Prediction**: We'll calculate order_total = price × quantity")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.subheader("Input Features")
+            
+            # Get unique categories from data
+            categories = df['category'].unique().tolist()
+            category = st.selectbox("Category", categories)
+            
+            # Get price range from data
+            price_min = float(df['price'].min())
+            price_max = float(df['price'].max())
+            price = st.number_input(
+                "Price ($)",
+                min_value=price_min,
+                max_value=price_max,
+                value=float(df['price'].mean()),
+                step=0.5
+            )
+            
+            quantity = st.number_input(
+                "Quantity",
+                min_value=1,
+                max_value=10,
+                value=2,
+                step=1
+            )
+            
+            # Get unique payment methods from data
+            payment_methods = df['payment_method'].unique().tolist()
+            payment_method = st.selectbox("Payment Method", payment_methods)
+        
+        with col2:
+            st.subheader("Category Statistics")
+            
+            # Show stats for selected category
+            category_data = df[df['category'] == category]
+            
+            st.metric("Average Price", f"${category_data['price'].mean():.2f}")
+            st.metric("Average Quantity", f"{category_data['quantity'].mean():.2f}")
+            st.metric("Average Total", f"${category_data['order_total'].mean():.2f}")
+        
+        if st.button("🔮 Calculate Prediction", type="primary"):
+            # Simple prediction
+            prediction = price * quantity
+            
+            st.success(f"### Predicted Order Total: ${prediction:.2f}")
+            
+            # Compare with category average
+            category_avg = df[df['category'] == category]['order_total'].mean()
+            
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("Your Prediction", f"${prediction:.2f}")
+            with col2:
+                st.metric("Category Average", f"${category_avg:.2f}")
+            with col3:
+                difference = prediction - category_avg
+                st.metric("Difference", f"${difference:.2f}", 
+                         delta=f"{(difference/category_avg)*100:.1f}%")
+
+    # ===================================
+    # PAGE 4: DATA TABLE
+    # ===================================
+    elif page == "Data Table":
+        st.header("📋 Data Table")
+        
+        st.subheader("Filter Data")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            selected_categories = st.multiselect(
+                "Filter by Category",
+                options=df['category'].unique().tolist(),
+                default=df['category'].unique().tolist()
+            )
+        
+        with col2:
+            selected_payments = st.multiselect(
+                "Filter by Payment Method",
+                options=df['payment_method'].unique().tolist(),
+                default=df['payment_method'].unique().tolist()
+            )
+        
+        with col3:
+            min_price = st.number_input("Min Price", value=float(df['price'].min()))
+            max_price = st.number_input("Max Price", value=float(df['price'].max()))
+        
+        # Apply filters
+        filtered_df = df[
+            (df['category'].isin(selected_categories)) &
+            (df['payment_method'].isin(selected_payments)) &
+            (df['price'] >= min_price) &
+            (df['price'] <= max_price)
+        ]
+        
+        st.write(f"**Showing {len(filtered_df):,} of {len(df):,} records**")
+        
+        # Display data
+        st.dataframe(filtered_df, use_container_width=True, height=400)
+        
+        # Download button
+        csv = filtered_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Filtered Data as CSV",
+            data=csv,
+            file_name="filtered_restaurant_sales.csv",
+            mime="text/csv"
+        )
+
 else:
-    st.sidebar.error("❌ Dataset Missing")
+    st.info("👆 Please upload your data file to continue")
 
-if model is not None:
-    st.sidebar.success("✅ ML Model Ready")
-else:
-    st.sidebar.error("❌ ML Model Missing")
-
-# ============================================================
-# 📈 PAGE 1 — EXECUTIVE DASHBOARD
-# ============================================================
-if page == "Executive Dashboard":
-
-    if df is None:
-        st.error(f"❌ DATA ERROR: {data_error}")
-        st.stop()
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    with c1:
-        st.metric("💰 Total Revenue", f"${df['order_total'].sum():,.2f}")
-    with c2:
-        st.metric("📦 Total Orders", f"{len(df):,}")
-    with c3:
-        st.metric("📈 Avg Order", f"${df['order_total'].mean():.2f}")
-    with c4:
-        st.metric("👥 Customers", df['customer_id'].nunique())
-
-    st.markdown("---")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        cat_sales = df.groupby("category")["order_total"].sum().reset_index()
-        fig = px.bar(cat_sales, x="category", y="order_total", title="Revenue by Category", color="order_total")
-        st.plotly_chart(fig, use_container_width=True)
-
-    with col2:
-        pay_counts = df["payment_method"].value_counts().reset_index()
-        pay_counts.columns = ["payment_method", "count"]
-        fig = px.pie(pay_counts, values="count", names="payment_method", title="Payment Method Distribution")
-        st.plotly_chart(fig, use_container_width=True)
-
-# ============================================================
-# 🔬 PAGE 2 — DATA SCIENCE LAB
-# ============================================================
-elif page == "Data Science Lab":
-
-    if df is None:
-        st.error(f"❌ DATA ERROR: {data_error}")
-        st.stop()
-
-    st.subheader("📊 Statistical Overview")
-    st.dataframe(df.describe(), use_container_width=True)
-
-    st.subheader("🔗 Feature Correlation Matrix")
-    numeric_cols = ["price", "quantity", "order_total", "hour", "day_of_week"]
-    fig = px.imshow(df[numeric_cols].corr(), text_auto=True, aspect="auto", color_continuous_scale="RdBu_r")
-    st.plotly_chart(fig, use_container_width=True)
-
-# ============================================================
-# 🤖 PAGE 3 — AI PREDICTIONS
-# ============================================================
-elif page == "AI Predictions":
-
-    if model is None:
-        st.error(f"❌ MODEL ERROR: {model_error}")
-        st.stop()
-
-    st.subheader("🤖 Nobel-Class Sales Prediction Engine")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        category = st.selectbox("Category", le_category.classes_)
-        price = st.number_input("Price ($)", 0.0, 100.0, 15.0)
-        quantity = st.number_input("Quantity", 1, 10, 2)
-        payment = st.selectbox("Payment Method", le_payment.classes_)
-
-    with col2:
-        day = st.slider("Day of Week (0=Mon)", 0, 6, 2)
-        hour = st.slider("Hour", 0, 23, 12)
-        month = st.slider("Month", 1, 12, 6)
-        is_weekend = 1 if day >= 5 else 0
-
-    if st.button("🔮 Predict with AI"):
-        features = np.array([[price, quantity, le_category.transform([category])[0],
-                              le_payment.transform([payment])[0], day, hour, month, is_weekend]])
-        prediction = model.predict(features)[0]
-        st.success(f"🏆 **Predicted Order Value: ${prediction:.2f}**")
-
-# ============================================================
-# 🏅 PAGE 4 — MODEL EXCELLENCE
-# ============================================================
-elif page == "Model Excellence":
-
-    st.subheader("🏅 Model Performance (Research Benchmark)")
-
-    results = pd.DataFrame({
-        "Model": ["Linear Regression", "Random Forest", "Gradient Boosting", "XGBoost"],
-        "R² Score": [0.87, 0.94, 0.93, 0.96],
-        "RMSE ($)": [4.21, 2.34, 2.51, 1.98],
-        "Rank": ["Good", "Excellent", "Excellent", "🏆 Gold Standard"]
-    })
-
-    st.dataframe(results, use_container_width=True)
-
-# ============================================================
-# 🧾 FOOTER
-# ============================================================
+# Footer
 st.markdown("---")
-st.markdown("""
-<div style="text-align:center;color:gray">
-🏆 Built with Research-Grade Machine Learning & Streamlit<br>
-<strong>“Excellence is not an act, it is a habit.”</strong>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    """
+    <div style='text-align: center; color: gray; padding: 20px;'>
+        <p>🍽️ Restaurant Sales Analytics System</p>
+        <p>Built with Streamlit & Python</p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
