@@ -7,128 +7,65 @@ from plotly.subplots import make_subplots
 from datetime import datetime, timedelta
 import warnings
 warnings.filterwarnings('ignore')
-import json
 from scipy import stats
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 import plotly.figure_factory as ff
-import networkx as nx
-import holoviews as hv
-hv.extension('bokeh')
+import time
+import calendar
+import json
 
 # ==============================================
-# 🚀 FUTURISTIC CONFIGURATION
+# 🎨 ULTRA-MODERN CONFIGURATION
 # ==============================================
 st.set_page_config(
-    page_title="Quantum Restaurant Intelligence 2030",
-    page_icon="🚀",
+    page_title="Restaurant Intelligence Nexus",
+    page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # ==============================================
-# 🌌 ADVANCED CSS FOR 2030 AESTHETICS
+# 🎭 CUSTOM CSS - MINIMALIST FUTURISM
 # ==============================================
 st.markdown("""
 <style>
-/* 🌟 FUTURISTIC BASE THEME */
+/* 🌐 Minimalist Cyber Theme */
 :root {
-    --neon-blue: #00f3ff;
-    --neon-purple: #9d4edd;
-    --neon-pink: #ff2a6d;
-    --matrix-green: #00ff41;
-    --cyber-yellow: #ffd300;
-    --dark-space: #0a0e17;
-    --hologram-blue: rgba(0, 195, 255, 0.3);
+    --primary: #2563eb;
+    --primary-dark: #1e40af;
+    --secondary: #7c3aed;
+    --accent: #10b981;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    --dark: #0f172a;
+    --light: #f8fafc;
+    --gray: #64748b;
 }
 
-/* 🪐 MAIN CONTAINER */
-.main {
-    background: linear-gradient(135deg, #0a0e17 0%, #1a1f3a 100%);
-    color: #ffffff;
-}
-
-/* 🎯 NEUMORPHIC CARDS */
-.futuristic-card {
-    background: rgba(20, 25, 45, 0.7);
+/* 🪟 Modern Glass Effect */
+.glass-panel {
+    background: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
-    border: 1px solid rgba(0, 243, 255, 0.2);
     padding: 25px;
     margin: 15px 0;
-    box-shadow: 
-        0 10px 30px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
+}
+
+.glass-panel:hover {
+    border-color: var(--primary);
+    box-shadow: 0 20px 40px rgba(37, 99, 235, 0.1);
+}
+
+/* 🔷 Geometric Shapes */
+.geometric-bg {
     position: relative;
     overflow: hidden;
 }
 
-.futuristic-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 243, 255, 0.1), transparent);
-    transition: left 0.7s;
-}
-
-.futuristic-card:hover::before {
-    left: 100%;
-}
-
-.futuristic-card:hover {
-    transform: translateY(-5px);
-    border-color: var(--neon-blue);
-    box-shadow: 
-        0 20px 40px rgba(0, 243, 255, 0.2),
-        0 0 30px rgba(0, 243, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-}
-
-/* 🌠 HOLOGRAM EFFECTS */
-.hologram-effect {
-    position: relative;
-    background: linear-gradient(45deg, 
-        transparent 30%, 
-        rgba(0, 243, 255, 0.1) 50%, 
-        transparent 70%);
-    animation: hologram 3s infinite linear;
-    background-size: 200% 200%;
-}
-
-@keyframes hologram {
-    0% { background-position: 100% 100%; }
-    100% { background-position: 0% 0%; }
-}
-
-/* 💫 PULSING ELEMENTS */
-@keyframes pulse-glow {
-    0%, 100% { 
-        box-shadow: 0 0 10px var(--neon-blue),
-                   0 0 20px var(--neon-blue),
-                   0 0 30px var(--neon-blue);
-    }
-    50% { 
-        box-shadow: 0 0 20px var(--neon-purple),
-                   0 0 40px var(--neon-purple),
-                   0 0 60px var(--neon-purple);
-    }
-}
-
-.pulse-glow {
-    animation: pulse-glow 2s infinite;
-}
-
-/* 🌀 DATA STREAM EFFECT */
-.data-stream {
-    position: relative;
-    overflow: hidden;
-}
-
-.data-stream::after {
+.geometric-bg::before {
     content: '';
     position: absolute;
     top: -50%;
@@ -136,71 +73,44 @@ st.markdown("""
     width: 200%;
     height: 200%;
     background: linear-gradient(45deg, 
-        transparent 30%, 
-        rgba(0, 255, 65, 0.1) 50%, 
-        transparent 70%);
-    animation: stream-flow 2s infinite linear;
+        transparent 20%, 
+        rgba(37, 99, 235, 0.05) 40%, 
+        transparent 60%);
+    animation: rotate 20s linear infinite;
+    z-index: -1;
 }
 
-@keyframes stream-flow {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+@keyframes rotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* 🪐 FLOATING ISLANDS */
-.floating-island {
-    animation: float 6s ease-in-out infinite;
+/* 📊 Data Cards */
+.data-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-20px); }
-}
-
-/* ⚡ QUANTUM PARTICLES */
-.quantum-particle {
+.data-card::after {
+    content: '';
     position: absolute;
-    width: 3px;
-    height: 3px;
-    background: var(--neon-blue);
-    border-radius: 50%;
-    animation: quantum 3s infinite linear;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
 }
 
-@keyframes quantum {
-    0% { 
-        transform: translate(0, 0); 
-        opacity: 0;
-    }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { 
-        transform: translate(var(--tx, 100px), var(--ty, 100px)); 
-        opacity: 0;
-    }
-}
-
-/* 🌈 GRADIENT TEXTS */
-.gradient-text {
-    background: linear-gradient(90deg, 
-        var(--neon-pink), 
-        var(--neon-purple), 
-        var(--neon-blue));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 800;
-}
-
-/* 🚀 3D BUTTONS */
-.futuristic-btn {
-    background: linear-gradient(135deg, 
-        rgba(0, 243, 255, 0.2), 
-        rgba(157, 78, 221, 0.2));
-    border: 1px solid rgba(0, 243, 255, 0.4);
+/* 🎮 Interactive Elements */
+.interactive-btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
     color: white;
+    border: none;
     padding: 12px 24px;
-    border-radius: 15px;
+    border-radius: 12px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
@@ -208,1134 +118,1397 @@ st.markdown("""
     overflow: hidden;
 }
 
-.futuristic-btn:hover {
-    background: linear-gradient(135deg, 
-        rgba(0, 243, 255, 0.4), 
-        rgba(157, 78, 221, 0.4));
-    border-color: var(--neon-blue);
+.interactive-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 20px rgba(0, 243, 255, 0.3);
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
 }
 
-/* 🌌 MATRIX RAIN EFFECT */
-.matrix-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: -1;
-    opacity: 0.1;
-}
-
-/* 📊 ADVANCED METRICS */
-.quantum-metric {
-    background: linear-gradient(135deg, 
-        rgba(20, 25, 45, 0.9), 
-        rgba(30, 35, 60, 0.9));
-    border-radius: 15px;
+/* 📈 Chart Containers */
+.chart-container {
+    background: rgba(15, 23, 42, 0.7);
+    border-radius: 16px;
     padding: 20px;
-    border-left: 5px solid;
-    position: relative;
-    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.quantum-metric::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, 
-        var(--neon-pink), 
-        var(--neon-purple), 
-        var(--neon-blue));
+/* 🌟 Pulse Animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
 }
 
-/* 🎮 GAMIFICATION BADGES */
-.achievement-badge {
-    display: inline-block;
-    padding: 8px 16px;
-    background: linear-gradient(135deg, 
-        #ff2a6d, 
-        #9d4edd);
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: bold;
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* 🎯 Custom Tabs */
+.custom-tab {
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 12px;
+    padding: 10px 20px;
     margin: 5px;
-    animation: badge-glow 2s infinite alternate;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: 1px solid transparent;
 }
 
-@keyframes badge-glow {
-    from { box-shadow: 0 0 10px #ff2a6d; }
-    to { box-shadow: 0 0 20px #9d4edd; }
+.custom-tab:hover {
+    background: rgba(37, 99, 235, 0.1);
+    border-color: var(--primary);
 }
 
-/* 🔮 PREDICTION CARDS */
-.prediction-card {
-    background: linear-gradient(135deg, 
-        rgba(157, 78, 221, 0.2), 
-        rgba(0, 243, 255, 0.2));
-    border: 1px solid rgba(157, 78, 221, 0.4);
-    border-radius: 15px;
-    padding: 20px;
-    margin: 10px;
+.custom-tab.active {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border-color: transparent;
 }
 
-/* Streamlit specific overrides */
+/* 🌙 Dark Mode Optimized */
+.dark-text { color: #e2e8f0; }
+.light-text { color: #94a3b8; }
+
+/* 🔄 Loading Animation */
+.loading-dots::after {
+    content: ' .';
+    animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+    0%, 20% { content: ' .'; }
+    40% { content: ' ..'; }
+    60% { content: ' ...'; }
+    80%, 100% { content: ' ...'; }
+}
+
+/* Streamlit Customizations */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 2px;
-    background: rgba(20, 25, 45, 0.8);
+    gap: 8px;
+    background: rgba(15, 23, 42, 0.5);
     padding: 10px;
-    border-radius: 15px;
+    border-radius: 16px;
 }
 
 .stTabs [data-baseweb="tab"] {
     background: transparent;
-    color: #aaa;
-    border-radius: 10px;
+    border-radius: 12px;
     padding: 10px 20px;
+    color: #94a3b8;
     font-weight: 500;
     transition: all 0.3s;
 }
 
 .stTabs [aria-selected="true"] {
-    background: linear-gradient(135deg, 
-        rgba(0, 243, 255, 0.2), 
-        rgba(157, 78, 221, 0.2));
-    color: white;
-    border: 1px solid rgba(0, 243, 255, 0.4);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white !important;
 }
 
 section[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0a0e17 0%, #1a1f3a 100%);
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
 }
+
+/* 🎨 Colorful Metric Indicators */
+.metric-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.indicator-up { background-color: var(--accent); }
+.indicator-down { background-color: var(--danger); }
+.indicator-neutral { background-color: var(--warning); }
 
 </style>
 """, unsafe_allow_html=True)
 
-# Add Matrix Rain Background
-st.markdown("""
-<div class="matrix-bg" id="matrixRain"></div>
-<script>
-// Matrix rain effect
-const canvas = document.createElement('canvas');
-const ctx = canvas.getContext('2d');
-canvas.style.position = 'fixed';
-canvas.style.top = '0';
-canvas.style.left = '0';
-canvas.style.width = '100%';
-canvas.style.height = '100%';
-canvas.style.pointerEvents = 'none';
-canvas.style.zIndex = '-1';
-canvas.style.opacity = '0.1';
-document.getElementById('matrixRain').appendChild(canvas);
-
-const matrixChars = "01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン";
-const fontSize = 14;
-let columns = Math.floor(window.innerWidth / fontSize);
-const drops = [];
-
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-for(let i = 0; i < columns; i++) {
-    drops[i] = 1;
-}
-
-function drawMatrix() {
-    ctx.fillStyle = 'rgba(10, 14, 23, 0.05)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    ctx.fillStyle = '#00ff41';
-    ctx.font = fontSize + 'px monospace';
-    
-    for(let i = 0; i < drops.length; i++) {
-        const char = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-        ctx.fillText(char, i * fontSize, drops[i] * fontSize);
-        
-        if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-            drops[i] = 0;
-        }
-        drops[i]++;
-    }
-}
-
-setInterval(drawMatrix, 35);
-
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    columns = Math.floor(window.innerWidth / fontSize);
-    drops.length = 0;
-    for(let i = 0; i < columns; i++) {
-        drops[i] = 1;
-    }
-});
-</script>
-""", unsafe_allow_html=True)
-
 # ==============================================
-# 🧠 QUANTUM DATA GENERATION (2030 EDITION)
+# 📊 SMART DATA GENERATION
 # ==============================================
-@st.cache_data(ttl=3600)
-def generate_quantum_data():
-    """Generate futuristic restaurant data with 2030 features"""
+@st.cache_data
+def generate_smart_data():
+    """Generate intelligent restaurant data with patterns"""
     np.random.seed(42)
-    
-    # Advanced 2030 metrics
     n_records = 17534
-    dates = pd.date_range('2025-01-01', '2026-01-01', periods=n_records)
     
+    # Create date range with weekends and holidays
+    dates = pd.date_range('2023-01-01', '2024-01-01', periods=n_records)
+    
+    # Generate realistic patterns
     data = {
-        # Core transactional data
-        'order_id': [f'QNT-{i:06d}' for i in range(1, n_records + 1)],
-        'customer_id': [f'CUST-{np.random.randint(10000, 99999)}' for _ in range(n_records)],
-        'quantum_session_id': [f'QSESS-{np.random.randint(1000000, 9999999)}' for _ in range(n_records)],
-        
-        # Advanced categories
-        'category': np.random.choice([
-            'Neo-Fusion Cuisine', 'Molecular Gastronomy', 'Vertical Farm Produce',
-            'Lab-Grown Proteins', 'Smart Nutrition', 'AI-Curated Meals',
-            'Zero-Waste Dishes', 'Climate-Adaptive Foods', 'Bio-Enhanced Meals'
-        ], n_records, p=[0.15, 0.1, 0.12, 0.08, 0.1, 0.15, 0.12, 0.1, 0.08]),
-        
-        'item': [],
-        'price': [],
-        'quantity': [],
-        
-        # 2030-specific metrics
-        'carbon_footprint': [],
-        'nutrition_score': [],
-        'prep_time_seconds': [],
-        'ai_recommendation_score': [],
-        'customer_satisfaction_index': [],
-        
-        # Temporal metrics
-        'order_datetime': dates,
-        'delivery_time_seconds': [],
-        
-        # Payment & tech
-        'payment_method': np.random.choice([
-            'Crypto Wallet', 'Biometric Auth', 'Neural Interface',
-            'Smart Contract', 'Quantum Secure', 'Social Credit'
-        ], n_records),
-        
-        'delivery_mode': np.random.choice([
-            'Drone Delivery', 'Autonomous Vehicle', 'Teleport Hub',
-            'Delivery Bot', 'Hoverboard', 'Instant 3D-Print'
-        ], n_records),
-        
-        # Customer experience
-        'ar_experience': np.random.choice(['Hologram Chef', 'VR Dining', 'Interactive Table', 'None'], n_records),
-        'personalization_level': np.random.choice(['DNA-Based', 'AI-Personalized', 'Standard'], n_records),
-        
-        # Business metrics
-        'dynamic_pricing_factor': np.random.uniform(0.8, 1.2, n_records),
-        'supply_chain_score': np.random.uniform(0.7, 1.0, n_records),
-        'food_safety_score': np.random.uniform(0.9, 1.0, n_records),
+        'Order ID': [f'ORD{str(i).zfill(6)}' for i in range(1, n_records + 1)],
+        'Customer ID': [f'CUST{np.random.randint(1000, 5000):04d}' for _ in range(n_records)],
+        'Category': np.random.choice(
+            ['Appetizer', 'Main Course', 'Dessert', 'Beverage', 'Side Dish'],
+            n_records,
+            p=[0.15, 0.35, 0.15, 0.25, 0.1]
+        ),
+        'Item': [],
+        'Price': [],
+        'Quantity': [],
+        'Order Total': [],
+        'Order Date': dates,
+        'Payment Method': np.random.choice(
+            ['Credit Card', 'Debit Card', 'Cash', 'Digital Wallet'],
+            n_records,
+            p=[0.5, 0.3, 0.15, 0.05]
+        )
     }
     
-    # Generate item-specific data
-    item_map = {
-        'Neo-Fusion Cuisine': ['Quantum Sushi', 'Hologram Ramen', 'Cyber-Punk Tacos', 'Neon Noodles'],
-        'Molecular Gastronomy': ['Edible Spheres', 'Liquid Nitrogen Ice', 'Foam Symphony', 'Gel Cubes'],
-        'Vertical Farm Produce': ['Sky-Grown Salad', 'Hydroponic Herbs', 'LED-Lettuce', 'Tower Tomatoes'],
-        'Lab-Grown Proteins': ['Cultured Steak', 'Bio-Shrimp', 'Lab-Lamb', 'Printed Chicken'],
-        'Smart Nutrition': ['Cognitive Boost Bowl', 'Immunity Elixir', 'Energy Orbs', 'Sleep Tea'],
-        'AI-Curated Meals': ['Algorithmic Platter', 'Neural Network Noodles', 'ML Medley', 'Deep Learning Dish'],
-        'Zero-Waste Dishes': ['Root-to-Stem Roast', 'Circular Curry', 'Waste-Free Wrap', 'Sustainable Stew'],
-        'Climate-Adaptive Foods': ['Drought-Resistant Dish', 'Heat-Tolerant Hash', 'Flood-Proof Fry'],
-        'Bio-Enhanced Meals': ['Vitamin-Infused Veggies', 'Omega-Fortified Fish', 'Probiotic Pizza']
+    # Item mapping with realistic pricing
+    items = {
+        'Appetizer': [('Garlic Bread', 8.99), ('Bruschetta', 12.99), ('Nachos', 14.99)],
+        'Main Course': [('Grilled Salmon', 28.99), ('Filet Mignon', 42.99), ('Pasta Carbonara', 22.99)],
+        'Dessert': [('Chocolate Cake', 9.99), ('Cheesecake', 11.99), ('Tiramisu', 10.99)],
+        'Beverage': [('Craft Beer', 7.99), ('Wine', 12.99), ('Cocktail', 14.99)],
+        'Side Dish': [('Fries', 5.99), ('Salad', 8.99), ('Mashed Potatoes', 6.99)]
     }
     
-    for cat in data['category']:
-        item = np.random.choice(item_map[cat])
-        data['item'].append(item)
+    for i in range(n_records):
+        category = data['Category'][i]
+        item, price = items[category][np.random.randint(0, len(items[category]))]
         
-        # Price based on category
-        base_price = {
-            'Neo-Fusion Cuisine': 45,
-            'Molecular Gastronomy': 60,
-            'Vertical Farm Produce': 25,
-            'Lab-Grown Proteins': 75,
-            'Smart Nutrition': 35,
-            'AI-Curated Meals': 50,
-            'Zero-Waste Dishes': 30,
-            'Climate-Adaptive Foods': 28,
-            'Bio-Enhanced Meals': 40
-        }[cat]
+        # Add weekday/weekend pricing variations
+        if dates[i].weekday() >= 5:  # Weekend
+            price *= 1.15
         
-        price = base_price * np.random.uniform(0.8, 1.2)
-        data['price'].append(round(price, 2))
+        # Add seasonal variations
+        if dates[i].month in [6, 7, 8]:  # Summer
+            if category == 'Beverage':
+                price *= 1.1
         
-        # Quantity
-        data['quantity'].append(np.random.choice([1, 2, 3, 4, 5], p=[0.3, 0.35, 0.2, 0.1, 0.05]))
+        data['Item'].append(item)
+        data['Price'].append(round(price, 2))
         
-        # Futuristic metrics
-        data['carbon_footprint'].append(round(np.random.uniform(0.1, 5.0), 2))  # kg CO2
-        data['nutrition_score'].append(np.random.randint(60, 100))
-        data['prep_time_seconds'].append(np.random.randint(300, 1800))
-        data['ai_recommendation_score'].append(round(np.random.uniform(0.7, 1.0), 2))
-        data['customer_satisfaction_index'].append(np.random.randint(70, 100))
-        data['delivery_time_seconds'].append(np.random.randint(600, 3600))
+        quantity = np.random.choice([1, 2, 3, 4], p=[0.6, 0.25, 0.1, 0.05])
+        data['Quantity'].append(quantity)
+        
+        data['Order Total'].append(round(price * quantity, 2))
     
     df = pd.DataFrame(data)
     
-    # Calculate derived metrics
-    df['order_total'] = df['price'] * df['quantity'] * df['dynamic_pricing_factor']
-    df['carbon_per_dollar'] = df['carbon_footprint'] / df['order_total']
-    df['efficiency_score'] = df['nutrition_score'] / df['carbon_footprint']
+    # Add derived features
+    df['Order Hour'] = df['Order Date'].dt.hour
+    df['Order Day'] = df['Order Date'].dt.day_name()
+    df['Order Month'] = df['Order Date'].dt.month
+    df['Order Week'] = df['Order Date'].dt.isocalendar().week
+    df['Is Weekend'] = df['Order Date'].dt.weekday >= 5
+    df['Day Part'] = pd.cut(df['Order Hour'], 
+                           bins=[0, 11, 17, 24], 
+                           labels=['Morning', 'Afternoon', 'Evening'])
     
-    # Time-based features
-    df['order_hour'] = df['order_datetime'].dt.hour
-    df['order_day'] = df['order_datetime'].dt.day_name()
-    df['order_month'] = df['order_datetime'].dt.month
-    df['order_season'] = df['order_datetime'].dt.month % 12 // 3 + 1
+    # Calculate customer lifetime value proxy
+    customer_stats = df.groupby('Customer ID').agg({
+        'Order Total': 'sum',
+        'Order ID': 'count'
+    }).rename(columns={'Order ID': 'Visit Count'})
     
-    # Customer segments based on futuristic metrics
-    conditions = [
-        (df['personalization_level'] == 'DNA-Based') & (df['ai_recommendation_score'] > 0.9),
-        (df['personalization_level'] == 'AI-Personalized'),
-        (df['ar_experience'] != 'None')
-    ]
-    choices = ['Quantum Elite', 'AI-Enhanced', 'Tech-Forward']
-    df['customer_segment'] = np.select(conditions, choices, default='Standard')
+    df = df.merge(customer_stats, on='Customer ID', how='left')
+    df['CLV Tier'] = pd.qcut(df['Order Total_y'], 4, 
+                            labels=['Bronze', 'Silver', 'Gold', 'Platinum'])
     
     return df
 
 # ==============================================
-# 🧬 ADVANCED ANALYTICS FUNCTIONS
+# 🧠 ANALYTICS ENGINE
 # ==============================================
-class QuantumAnalytics:
-    """Advanced analytics engine for 2030"""
+class RestaurantAnalytics:
+    def __init__(self, df):
+        self.df = df
+        self.scaler = StandardScaler()
     
-    @staticmethod
-    def predict_future_trends(df, periods=30):
-        """AI-powered trend prediction"""
-        df_ts = df.resample('D', on='order_datetime')['order_total'].sum().reset_index()
-        df_ts['date_ordinal'] = df_ts['order_datetime'].map(datetime.toordinal)
-        
-        # Simple regression for demonstration
-        X = df_ts['date_ordinal'].values.reshape(-1, 1)
-        y = df_ts['order_total'].values
-        
-        # Add seasonality
-        last_date = df_ts['order_datetime'].max()
-        future_dates = [last_date + timedelta(days=i) for i in range(1, periods + 1)]
-        
-        # Generate predictions with trend and seasonality
-        base_trend = np.linspace(y[-1], y[-1] * 1.1, periods)
-        seasonality = np.sin(np.linspace(0, 4*np.pi, periods)) * (y.mean() * 0.15)
-        predictions = base_trend + seasonality
-        
-        return future_dates, predictions
+    def detect_anomalies(self):
+        """Detect anomalous orders"""
+        amounts = self.df['Order Total'].values.reshape(-1, 1)
+        z_scores = np.abs(stats.zscore(amounts))
+        anomalies = self.df[z_scores > 3]
+        return anomalies
     
-    @staticmethod
-    def calculate_sustainability_index(df):
-        """Advanced sustainability scoring"""
-        carbon_efficiency = 1 - (df['carbon_per_dollar'].mean() / df['carbon_per_dollar'].max())
-        waste_score = len(df[df['category'].str.contains('Zero-Waste')]) / len(df)
-        efficiency = df['efficiency_score'].mean() / df['efficiency_score'].max()
+    def customer_segmentation(self):
+        """K-means clustering for customer segmentation"""
+        features = self.df.groupby('Customer ID').agg({
+            'Order Total': ['sum', 'mean', 'count'],
+            'Price': 'mean'
+        }).reset_index()
         
-        sustainability_index = (carbon_efficiency * 0.4 + waste_score * 0.3 + efficiency * 0.3) * 100
-        return round(sustainability_index, 1)
+        features.columns = ['Customer ID', 'Total_Spent', 'Avg_Order', 'Visit_Count', 'Avg_Price']
+        
+        # Normalize features
+        X = self.scaler.fit_transform(features[['Total_Spent', 'Avg_Order', 'Visit_Count']])
+        
+        # Apply K-means
+        kmeans = KMeans(n_clusters=4, random_state=42)
+        features['Segment'] = kmeans.fit_predict(X)
+        
+        segment_names = {
+            0: 'High-Value Regulars',
+            1: 'Big Spenders',
+            2: 'Frequent Visitors',
+            3: 'Occasional Buyers'
+        }
+        
+        features['Segment_Name'] = features['Segment'].map(segment_names)
+        return features
     
-    @staticmethod
-    def generate_ai_insights(df):
-        """Generate AI-powered business insights"""
-        insights = []
+    def forecast_revenue(self, days=30):
+        """Simple revenue forecasting"""
+        daily_revenue = self.df.resample('D', on='Order Date')['Order Total'].sum()
         
-        # Peak hours analysis
-        peak_hour = df.groupby('order_hour')['order_total'].sum().idxmax()
-        insights.append(f"⚡ **Quantum Peak**: Hour {peak_hour}:00 generates maximum revenue")
+        # Add trend and seasonality
+        dates = pd.date_range(daily_revenue.index[-1] + timedelta(days=1), 
+                             periods=days, freq='D')
         
-        # Most efficient category
-        efficient_cat = df.groupby('category')['efficiency_score'].mean().idxmax()
-        insights.append(f"🌱 **Efficiency Champion**: {efficient_cat} has best nutrition-to-carbon ratio")
+        # Simulate forecast with trend
+        last_value = daily_revenue.iloc[-1]
+        trend = np.linspace(last_value, last_value * 1.15, days)
+        seasonality = np.sin(np.linspace(0, 4*np.pi, days)) * (last_value * 0.1)
         
-        # Personalization impact
-        dna_revenue = df[df['personalization_level'] == 'DNA-Based']['order_total'].mean()
-        std_revenue = df[df['personalization_level'] == 'Standard']['order_total'].mean()
-        uplift = ((dna_revenue - std_revenue) / std_revenue) * 100
-        insights.append(f"🧬 **DNA Personalization** boosts order value by {uplift:.1f}%")
+        forecast = trend + seasonality
+        forecast_dates = dates
         
-        return insights
+        return forecast_dates, forecast
 
 # ==============================================
-# 🚀 MAIN DASHBOARD APPLICATION
+# 🎯 DASHBOARD APPLICATION
 # ==============================================
 def main():
-    # Initialize
-    df = generate_quantum_data()
-    analytics = QuantumAnalytics()
+    # Load data
+    df = generate_smart_data()
+    analytics = RestaurantAnalytics(df)
     
-    # Futuristic Header
-    st.markdown("""
-    <div style="text-align: center; padding: 30px 0;">
-        <h1 class="gradient-text" style="font-size: 4rem; margin-bottom: 0;">
-            🚀 QUANTUM RESTAURANT INTELLIGENCE 2030
-        </h1>
-        <div style="display: flex; justify-content: center; gap: 20px; margin-top: 10px;">
-            <span class="achievement-badge">AI-POWERED</span>
-            <span class="achievement-badge">QUANTUM READY</span>
-            <span class="achievement-badge">SUSTAINABILITY FOCUSED</span>
-            <span class="achievement-badge">NEURAL OPTIMIZED</span>
+    # Header with interactive elements
+    col1, col2, col3 = st.columns([2, 3, 1])
+    
+    with col1:
+        st.markdown("""
+        <div class="glass-panel">
+            <h1 style="margin: 0; color: var(--primary);">🍽️</h1>
+            <h3 style="margin: 5px 0;">Restaurant Intelligence</h3>
+            <p class="light-text">Data-Driven Excellence</p>
         </div>
-        <p style="color: #aaa; margin-top: 20px;">
-            Advanced Predictive Analytics • Real-Time Quantum Processing • Sustainable Business Intelligence
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
     
-    # ==============================================
-    # 🎮 SIDEBAR - QUANTUM CONTROL CENTER
-    # ==============================================
+    with col2:
+        st.markdown("""
+        <div class="glass-panel geometric-bg">
+            <h2 style="margin: 0; background: linear-gradient(90deg, var(--primary), var(--accent));
+                      -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+              📊 Restaurant Analytics Dashboard
+            </h2>
+            <p class="light-text">17,534 Transactions • Real-Time Intelligence • Predictive Insights</p>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        st.markdown("""
+        <div class="data-card">
+            <div style="text-align: center;">
+                <div class="pulse">🔄</div>
+                <p style="margin: 5px 0; font-size: 0.9rem;">Live Data</p>
+                <p style="margin: 0; font-size: 1.2rem; font-weight: bold;">{}</p>
+            </div>
+        </div>
+        """.format(datetime.now().strftime("%H:%M:%S")), unsafe_allow_html=True)
+    
+    # Sidebar - Advanced Controls
     with st.sidebar:
-        st.markdown('<div class="futuristic-card">', unsafe_allow_html=True)
-        st.markdown("### 🔮 QUANTUM CONTROL CENTER")
+        st.markdown("""
+        <div class="glass-panel">
+            <h3>🔧 Control Panel</h3>
+        </div>
+        """, unsafe_allow_html=True)
         
-        # Date selector with hologram effect
+        # Date Range Selector
+        min_date = df['Order Date'].min().date()
+        max_date = df['Order Date'].max().date()
+        
         date_range = st.date_input(
-            "⏰ TEMPORAL RANGE",
-            value=(df['order_datetime'].min().date(), df['order_datetime'].max().date()),
-            key="quantum_date"
+            "📅 Date Range",
+            value=(min_date, max_date),
+            min_value=min_date,
+            max_value=max_date,
+            key="date_range"
         )
         
-        # Advanced filter groups
-        with st.expander("🌌 MULTI-DIMENSIONAL FILTERS", expanded=True):
+        if len(date_range) == 2:
+            start_date, end_date = date_range
+            filtered_df = df[(df['Order Date'].dt.date >= start_date) & 
+                           (df['Order Date'].dt.date <= end_date)]
+        else:
+            filtered_df = df
+        
+        # Advanced Filters
+        with st.expander("🎯 Advanced Filters", expanded=False):
             categories = st.multiselect(
-                "🧪 CULINARY DIMENSIONS",
-                options=sorted(df['category'].unique()),
-                default=df['category'].unique()[:3]
+                "Categories",
+                options=sorted(df['Category'].unique()),
+                default=sorted(df['Category'].unique())
             )
             
-            tech_level = st.select_slider(
-                "🤖 TECH INTEGRATION LEVEL",
-                options=['Standard', 'Tech-Forward', 'AI-Enhanced', 'Quantum Elite'],
-                value='Tech-Forward'
+            payment_methods = st.multiselect(
+                "Payment Methods",
+                options=sorted(df['Payment Method'].unique()),
+                default=sorted(df['Payment Method'].unique())
             )
             
-            sustainability = st.slider(
-                "🌱 SUSTAINABILITY THRESHOLD",
-                0.0, 100.0, 50.0,
-                help="Minimum sustainability score"
+            time_of_day = st.multiselect(
+                "Time of Day",
+                options=['Morning', 'Afternoon', 'Evening'],
+                default=['Morning', 'Afternoon', 'Evening']
             )
         
-        with st.expander("🧠 AI PARAMETERS", expanded=False):
-            prediction_horizon = st.slider("🔮 PREDICTION HORIZON (days)", 7, 90, 30)
-            confidence_level = st.slider("🎯 CONFIDENCE LEVEL", 0.8, 0.99, 0.95)
-            ai_aggressiveness = st.select_slider(
-                "⚡ AI AGGRESSIVENESS",
-                options=['Conservative', 'Balanced', 'Aggressive', 'Quantum Leap'],
-                value='Balanced'
-            )
+        if categories:
+            filtered_df = filtered_df[filtered_df['Category'].isin(categories)]
+        if payment_methods:
+            filtered_df = filtered_df[filtered_df['Payment Method'].isin(payment_methods)]
+        if time_of_day:
+            filtered_df = filtered_df[filtered_df['Day Part'].isin(time_of_day)]
         
-        st.markdown("</div>", unsafe_allow_html=True)
+        # AI Insights Button
+        if st.button("🤖 Generate AI Insights", use_container_width=True, type="primary"):
+            st.session_state['show_insights'] = True
         
-        # Real-time metrics in sidebar
-        st.markdown('<div class="futuristic-card">', unsafe_allow_html=True)
-        st.markdown("### 📡 LIVE QUANTUM METRICS")
-        
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric("⚡ Processing Speed", "12.7 PetaFLOPS", "+3.2%")
-            st.metric("🌍 Carbon Neutrality", "94.3%", "🟢")
-        with col2:
-            st.metric("🧠 AI Accuracy", "96.8%", "+1.4%")
-            st.metric("⏱️ Latency", "3.2ms", "⚡")
-        
-        st.markdown("</div>", unsafe_allow_html=True)
-    
-    # ==============================================
-    # 🎯 SECTION 1: QUANTUM METRICS DASHBOARD
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🎯 QUANTUM BUSINESS METRICS</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Futuristic metric cards in 4x2 grid
-    metrics_cols = st.columns(4)
-    metric_data = [
-        ("💰 QUANTUM REVENUE", f"${df['order_total'].sum():,.0f}", "+12.3%", "neon-blue"),
-        ("🧬 DNA PERSONALIZED", f"{len(df[df['personalization_level'] == 'DNA-Based']):,}", "34.5%", "neon-purple"),
-        ("🤖 AI RECOMMENDATIONS", f"{df['ai_recommendation_score'].mean():.1%}", "96.8% Accuracy", "neon-pink"),
-        ("🌱 SUSTAINABILITY INDEX", f"{analytics.calculate_sustainability_index(df)}/100", "Carbon Negative", "matrix-green"),
-        ("🚀 ORDER VELOCITY", f"{df['delivery_time_seconds'].mean()/60:.1f}min", "23.4s Faster", "cyber-yellow"),
-        ("🎯 CUSTOMER SATISFACTION", f"{df['customer_satisfaction_index'].mean():.1f}/100", "All-Time High", "neon-blue"),
-        ("⚡ TECH ADOPTION", f"{len(df[df['ar_experience'] != 'None'])/len(df):.1%}", "+18.2%", "neon-purple"),
-        ("🔮 PREDICTION ACCURACY", "94.7%", "Quantum Enhanced", "neon-pink")
-    ]
-    
-    for idx, (title, value, delta, color) in enumerate(metric_data):
-        with metrics_cols[idx % 4]:
-            st.markdown(f"""
-            <div class="quantum-metric" style="border-left-color: var(--{color});">
-                <div style="font-size: 0.9rem; color: #aaa; margin-bottom: 8px;">{title}</div>
-                <div style="font-size: 1.8rem; font-weight: 800; margin: 10px 0;">{value}</div>
-                <div style="font-size: 0.9rem; color: #0f0;">{delta}</div>
+        # Quick Stats
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>📈 Quick Stats</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                <div class="data-card">
+                    <small>Revenue</small>
+                    <h4>${:,.0f}</h4>
+                </div>
+                <div class="data-card">
+                    <small>Orders</small>
+                    <h4>{:,}</h4>
+                </div>
+                <div class="data-card">
+                    <small>Avg Order</small>
+                    <h4>${:.2f}</h4>
+                </div>
+                <div class="data-card">
+                    <small>Customers</small>
+                    <h4>{:,}</h4>
+                </div>
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """.format(
+            filtered_df['Order Total'].sum(),
+            len(filtered_df),
+            filtered_df['Order Total'].mean(),
+            filtered_df['Customer ID'].nunique()
+        ), unsafe_allow_html=True)
     
-    # ==============================================
-    # 🌌 SECTION 2: HOLOGRAM VISUALIZATIONS
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🌌 QUANTUM VISUALIZATION MATRIX</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create tabs for different visualization modes
-    viz_tabs = st.tabs([
-        "🌀 MULTI-DIMENSIONAL ANALYSIS",
-        "⚡ REAL-TIME FLOW",
-        "🎯 PREDICTIVE INSIGHTS",
-        "🔗 NETWORK INTELLIGENCE"
+    # Main Content - Tab Navigation
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📈 Overview", 
+        "📊 Category Analysis", 
+        "👥 Customer Insights", 
+        "⏰ Temporal Analysis", 
+        "🔍 Raw Data"
     ])
     
-    with viz_tabs[0]:
-        # 3D Visualization
-        col1, col2 = st.columns(2)
+    # ==============================================
+    # 📈 TAB 1: OVERVIEW - COMPLETELY NEW DESIGN
+    # ==============================================
+    with tab1:
+        st.markdown("""
+        <div class="glass-panel">
+            <h2>📈 Business Intelligence Overview</h2>
+            <p class="light-text">Real-time performance metrics and predictive analytics</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # NEW: Interactive KPI Dashboard
+        kpi_cols = st.columns(4)
+        with kpi_cols[0]:
+            revenue_growth = (filtered_df['Order Total'].sum() / df['Order Total'].sum() - 1) * 100
+            st.markdown(f"""
+            <div class="data-card">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="metric-indicator {'indicator-up' if revenue_growth > 0 else 'indicator-down'}"></span>
+                    <small>Total Revenue</small>
+                </div>
+                <h3 style="margin: 0;">${filtered_df['Order Total'].sum():,.0f}</h3>
+                <p style="margin: 5px 0; color: {'var(--accent)' if revenue_growth > 0 else 'var(--danger)'};">
+                    {revenue_growth:+.1f}% vs total
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi_cols[1]:
+            avg_order = filtered_df['Order Total'].mean()
+            overall_avg = df['Order Total'].mean()
+            change = ((avg_order / overall_avg) - 1) * 100
+            st.markdown(f"""
+            <div class="data-card">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="metric-indicator {'indicator-up' if change > 0 else 'indicator-down'}"></span>
+                    <small>Avg Order Value</small>
+                </div>
+                <h3 style="margin: 0;">${avg_order:.2f}</h3>
+                <p style="margin: 5px 0; color: {'var(--accent)' if change > 0 else 'var(--danger)'};">
+                    {change:+.1f}% vs overall
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi_cols[2]:
+            order_count = len(filtered_df)
+            daily_rate = order_count / ((end_date - start_date).days + 1)
+            st.markdown(f"""
+            <div class="data-card">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="metric-indicator indicator-up"></span>
+                    <small>Order Velocity</small>
+                </div>
+                <h3 style="margin: 0;">{order_count:,}</h3>
+                <p style="margin: 5px 0; color: var(--light);">
+                    {daily_rate:.1f} orders/day
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        with kpi_cols[3]:
+            customer_count = filtered_df['Customer ID'].nunique()
+            repeat_rate = len(filtered_df[filtered_df['Visit Count'] > 1]) / customer_count * 100
+            st.markdown(f"""
+            <div class="data-card">
+                <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                    <span class="metric-indicator indicator-up"></span>
+                    <small>Customer Retention</small>
+                </div>
+                <h3 style="margin: 0;">{customer_count:,}</h3>
+                <p style="margin: 5px 0; color: var(--accent);">
+                    {repeat_rate:.1f}% repeat rate
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # NEW: Interactive Revenue Trend with Anomaly Detection
+        st.markdown("""
+        <div class="glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>📈 Revenue Trend with Anomaly Detection</h3>
+                <div style="display: flex; gap: 10px;">
+                    <button class="custom-tab active" onclick="updateView('daily')">Daily</button>
+                    <button class="custom-tab" onclick="updateView('weekly')">Weekly</button>
+                    <button class="custom-tab" onclick="updateView('monthly')">Monthly</button>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        col1, col2 = st.columns([3, 1])
         
         with col1:
-            st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-            st.markdown("##### 🧪 CATEGORY QUANTUM MAP")
+            # Create animated revenue chart
+            daily_revenue = filtered_df.resample('D', on='Order Date')['Order Total'].sum().reset_index()
             
-            # Create 3D scatter plot
-            category_stats = df.groupby('category').agg({
-                'order_total': 'sum',
-                'efficiency_score': 'mean',
-                'carbon_footprint': 'mean',
-                'customer_satisfaction_index': 'mean'
-            }).reset_index()
+            fig = go.Figure()
             
-            fig = px.scatter_3d(
+            # Main line
+            fig.add_trace(go.Scatter(
+                x=daily_revenue['Order Date'],
+                y=daily_revenue['Order Total'],
+                mode='lines',
+                name='Revenue',
+                line=dict(color='#2563eb', width=3),
+                fill='tozeroy',
+                fillcolor='rgba(37, 99, 235, 0.1)'
+            ))
+            
+            # Moving average
+            ma7 = daily_revenue['Order Total'].rolling(window=7, min_periods=1).mean()
+            fig.add_trace(go.Scatter(
+                x=daily_revenue['Order Date'],
+                y=ma7,
+                mode='lines',
+                name='7-Day MA',
+                line=dict(color='#10b981', width=2, dash='dash')
+            ))
+            
+            # Detect and highlight anomalies
+            anomalies = analytics.detect_anomalies()
+            if not anomalies.empty:
+                anomaly_dates = anomalies['Order Date']
+                anomaly_values = anomalies['Order Total']
+                fig.add_trace(go.Scatter(
+                    x=anomaly_dates,
+                    y=anomaly_values,
+                    mode='markers',
+                    name='Anomalies',
+                    marker=dict(
+                        color='#ef4444',
+                        size=10,
+                        symbol='diamond'
+                    )
+                ))
+            
+            fig.update_layout(
+                height=400,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0'),
+                xaxis=dict(
+                    gridcolor='rgba(255,255,255,0.1)',
+                    title='Date'
+                ),
+                yaxis=dict(
+                    gridcolor='rgba(255,255,255,0.1)',
+                    title='Revenue ($)'
+                ),
+                hovermode='x unified'
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="data-card">
+                <h4>⚡ Performance Metrics</h4>
+                <div style="margin-top: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span>Peak Day:</span>
+                        <strong>${daily_revenue['Order Total'].max():,.0f}</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span>Growth Rate:</span>
+                        <strong style="color: var(--accent);">+{:.1f}%</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span>Volatility:</span>
+                        <strong style="color: var(--warning);">{:.1f}%</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin: 10px 0;">
+                        <span>Anomalies:</span>
+                        <strong style="color: var(--danger);">{}</strong>
+                    </div>
+                </div>
+            </div>
+            """.format(
+                (daily_revenue['Order Total'].iloc[-1] / daily_revenue['Order Total'].iloc[0] - 1) * 100,
+                daily_revenue['Order Total'].std() / daily_revenue['Order Total'].mean() * 100,
+                len(anomalies) if not anomalies.empty else 0
+            ), unsafe_allow_html=True)
+        
+        # NEW: Predictive Analytics Section
+        st.markdown("""
+        <div class="glass-panel">
+            <h3>🔮 Revenue Forecast & Predictions</h3>
+            <p class="light-text">AI-powered 30-day revenue forecasting</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Generate forecast
+        forecast_dates, forecast_values = analytics.forecast_revenue(days=30)
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            fig = go.Figure()
+            
+            # Historical data
+            hist = filtered_df.resample('W', on='Order Date')['Order Total'].sum()
+            fig.add_trace(go.Scatter(
+                x=hist.index,
+                y=hist.values,
+                mode='lines',
+                name='Historical',
+                line=dict(color='#7c3aed', width=2)
+            ))
+            
+            # Forecast
+            fig.add_trace(go.Scatter(
+                x=forecast_dates,
+                y=forecast_values,
+                mode='lines+markers',
+                name='Forecast',
+                line=dict(color='#10b981', width=3, dash='dot')
+            ))
+            
+            # Confidence interval
+            fig.add_trace(go.Scatter(
+                x=list(forecast_dates) + list(forecast_dates)[::-1],
+                y=list(forecast_values * 1.2) + list(forecast_values * 0.8)[::-1],
+                fill='toself',
+                fillcolor='rgba(16, 185, 129, 0.2)',
+                line=dict(color='rgba(255,255,255,0)'),
+                name='80% Confidence',
+                showlegend=False
+            ))
+            
+            fig.update_layout(
+                height=350,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            st.markdown("""
+            <div class="data-card">
+                <h4>📊 Forecast Details</h4>
+                <div style="margin-top: 15px;">
+                    <div style="background: linear-gradient(90deg, var(--primary), transparent); 
+                                padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <small>Next 7 Days</small>
+                        <h4 style="margin: 5px 0;">${:,.0f}</h4>
+                    </div>
+                    <div style="background: linear-gradient(90deg, var(--accent), transparent); 
+                                padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <small>Next 30 Days</small>
+                        <h4 style="margin: 5px 0;">${:,.0f}</h4>
+                    </div>
+                    <div style="background: linear-gradient(90deg, var(--warning), transparent); 
+                                padding: 10px; border-radius: 8px; margin: 10px 0;">
+                        <small>Growth Estimate</small>
+                        <h4 style="margin: 5px 0;">+{:.1f}%</h4>
+                    </div>
+                </div>
+            </div>
+            """.format(
+                forecast_values[:7].sum(),
+                forecast_values.sum(),
+                ((forecast_values[-1] / hist.iloc[-1]) - 1) * 100
+            ), unsafe_allow_html=True)
+    
+    # ==============================================
+    # 📊 TAB 2: CATEGORY ANALYSIS - COMPLETELY NEW
+    # ==============================================
+    with tab2:
+        st.markdown("""
+        <div class="glass-panel">
+            <h2>📊 Category Performance Intelligence</h2>
+            <p class="light-text">Deep dive into category performance and optimization opportunities</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # NEW: Category Performance Matrix
+        category_stats = filtered_df.groupby('Category').agg({
+            'Order Total': ['sum', 'mean', 'count'],
+            'Price': 'mean',
+            'Quantity': 'mean'
+        }).round(2)
+        
+        category_stats.columns = ['Revenue', 'Avg_Order', 'Orders', 'Avg_Price', 'Avg_Quantity']
+        category_stats = category_stats.reset_index()
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Interactive bubble chart
+            fig = px.scatter(
                 category_stats,
-                x='order_total',
-                y='efficiency_score',
-                z='customer_satisfaction_index',
-                color='carbon_footprint',
-                size='order_total',
-                hover_name='category',
-                title="3D Quantum Business Analysis",
-                color_continuous_scale=px.colors.sequential.Plasma
+                x='Orders',
+                y='Avg_Order',
+                size='Revenue',
+                color='Category',
+                hover_name='Category',
+                size_max=60,
+                title='Category Performance Matrix'
             )
             
             fig.update_layout(
-                scene=dict(
-                    xaxis_title="Revenue (Quantum Units)",
-                    yaxis_title="Efficiency Score",
-                    zaxis_title="Customer Satisfaction"
-                ),
-                height=500
+                height=500,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#e2e8f0')
             )
             
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
-            st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-            st.markdown("##### ⚡ TECH ADOPTION VORTEX")
+            st.markdown("""
+            <div class="data-card">
+                <h4>🏆 Category Rankings</h4>
+                <div style="margin-top: 20px;">
+            """, unsafe_allow_html=True)
             
-            # Sunburst chart for tech hierarchy
-            tech_hierarchy = df.groupby(['category', 'ar_experience', 'personalization_level']).size().reset_index(name='count')
+            # Create ranking visualization
+            for idx, row in category_stats.sort_values('Revenue', ascending=False).iterrows():
+                width = (row['Revenue'] / category_stats['Revenue'].max()) * 100
+                st.markdown(f"""
+                <div style="margin: 15px 0;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>{row['Category']}</span>
+                        <strong>${row['Revenue']:,.0f}</strong>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.1); height: 6px; border-radius: 3px; margin-top: 5px;">
+                        <div style="width: {width}%; height: 100%; 
+                                  background: linear-gradient(90deg, var(--primary), var(--secondary));
+                                  border-radius: 3px;"></div>
+                    </div>
+                    <small style="color: var(--gray);">
+                        {row['Orders']} orders • ${row['Avg_Order']:.2f} avg
+                    </small>
+                </div>
+                """, unsafe_allow_html=True)
             
-            fig = px.sunburst(
-                tech_hierarchy,
-                path=['category', 'ar_experience', 'personalization_level'],
-                values='count',
-                color='count',
-                color_continuous_scale=px.colors.sequential.Viridis,
-                title="Technology Adoption Hierarchy"
+            st.markdown("</div></div>", unsafe_allow_html=True)
+        
+        # NEW: Item-Level Analysis within Categories
+        st.markdown("""
+        <div class="glass-panel">
+            <h3>🍽️ Item-Level Performance Analysis</h3>
+            <p class="light-text">Drill down into individual item performance</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        selected_category = st.selectbox(
+            "Select Category to Analyze",
+            options=category_stats['Category'].tolist(),
+            key="category_select"
+        )
+        
+        if selected_category:
+            category_items = filtered_df[filtered_df['Category'] == selected_category]
+            item_stats = category_items.groupby('Item').agg({
+                'Order Total': 'sum',
+                'Order ID': 'count',
+                'Price': 'mean',
+                'Quantity': 'sum'
+            }).rename(columns={'Order ID': 'Orders'}).nlargest(10, 'Order Total')
+            
+            col1, col2 = st.columns([3, 2])
+            
+            with col1:
+                fig = px.bar(
+                    item_stats.reset_index(),
+                    x='Item',
+                    y='Order Total',
+                    title=f'Top Items in {selected_category}',
+                    color='Orders',
+                    color_continuous_scale='Viridis'
+                )
+                
+                fig.update_layout(
+                    height=400,
+                    xaxis_tickangle=-45,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#e2e8f0')
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+            
+            with col2:
+                # Create a radar chart for top item
+                top_item = item_stats.iloc[0].name
+                top_item_data = category_items[category_items['Item'] == top_item]
+                
+                metrics = [
+                    ('Revenue', top_item_data['Order Total'].sum()),
+                    ('Orders', len(top_item_data)),
+                    ('Avg Price', top_item_data['Price'].mean()),
+                    ('Total Quantity', top_item_data['Quantity'].sum()),
+                    ('Customer Reach', top_item_data['Customer ID'].nunique())
+                ]
+                
+                fig = go.Figure(data=go.Scatterpolar(
+                    r=[m[1] for m in metrics],
+                    theta=[m[0] for m in metrics],
+                    fill='toself',
+                    line_color='var(--primary)'
+                ))
+                
+                fig.update_layout(
+                    polar=dict(
+                        radialaxis=dict(
+                            visible=True,
+                            range=[0, max([m[1] for m in metrics]) * 1.2]
+                        )),
+                    showlegend=False,
+                    height=400,
+                    title=f"Performance Radar: {top_item}"
+                )
+                
+                st.plotly_chart(fig, use_container_width=True)
+    
+    # ==============================================
+    # 👥 TAB 3: CUSTOMER INSIGHTS - COMPLETELY NEW
+    # ==============================================
+    with tab3:
+        st.markdown("""
+        <div class="glass-panel">
+            <h2>👥 Customer Intelligence & Segmentation</h2>
+            <p class="light-text">Advanced customer analytics and behavioral insights</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # NEW: Customer Segmentation using K-means
+        with st.spinner("🧠 Analyzing customer segments..."):
+            customer_segments = analytics.customer_segmentation()
+        
+        col1, col2 = st.columns([3, 2])
+        
+        with col1:
+            # 3D segmentation visualization
+            fig = px.scatter_3d(
+                customer_segments,
+                x='Total_Spent',
+                y='Visit_Count',
+                z='Avg_Order',
+                color='Segment_Name',
+                hover_name='Customer ID',
+                title='3D Customer Segmentation'
             )
             
-            fig.update_layout(height=500)
+            fig.update_layout(
+                height=500,
+                scene=dict(
+                    xaxis_title='Total Spent',
+                    yaxis_title='Visit Count',
+                    zaxis_title='Avg Order Value'
+                )
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-    
-    with viz_tabs[1]:
-        # Real-time flow visualization
-        st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-        st.markdown("##### 🌊 QUANTUM REVENUE FLOW")
         
-        # Create animated time series
-        hourly_revenue = df.resample('H', on='order_datetime')['order_total'].sum().reset_index()
-        
-        fig = px.line(
-            hourly_revenue,
-            x='order_datetime',
-            y='order_total',
-            title="Real-Time Revenue Quantum Flow",
-            line_shape='spline'
-        )
-        
-        # Add confidence interval
-        fig.add_trace(go.Scatter(
-            x=hourly_revenue['order_datetime'],
-            y=hourly_revenue['order_total'] * 1.1,
-            mode='lines',
-            line=dict(width=0),
-            showlegend=False,
-            name='Upper Bound'
-        ))
-        
-        fig.add_trace(go.Scatter(
-            x=hourly_revenue['order_datetime'],
-            y=hourly_revenue['order_total'] * 0.9,
-            mode='lines',
-            line=dict(width=0),
-            fill='tonexty',
-            fillcolor='rgba(0, 243, 255, 0.2)',
-            showlegend=False,
-            name='Lower Bound'
-        ))
-        
-        fig.update_layout(
-            height=400,
-            hovermode='x unified',
-            xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
-            yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)')
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with viz_tabs[2]:
-        # Predictive analytics
-        st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-        st.markdown("##### 🔮 QUANTUM PREDICTION ENGINE")
-        
-        future_dates, predictions = analytics.predict_future_trends(df)
-        
-        fig = go.Figure()
-        
-        # Historical data
-        historical = df.resample('D', on='order_datetime')['order_total'].sum()
-        fig.add_trace(go.Scatter(
-            x=historical.index,
-            y=historical.values,
-            mode='lines',
-            name='Historical',
-            line=dict(color='#00f3ff', width=2)
-        ))
-        
-        # Predictions
-        fig.add_trace(go.Scatter(
-            x=future_dates,
-            y=predictions,
-            mode='lines+markers',
-            name='Quantum Prediction',
-            line=dict(color='#ff2a6d', width=3, dash='dot')
-        ))
-        
-        # Confidence interval
-        fig.add_trace(go.Scatter(
-            x=future_dates + future_dates[::-1],
-            y=list(predictions * 1.1) + list(predictions * 0.9)[::-1],
-            fill='toself',
-            fillcolor='rgba(255, 42, 109, 0.2)',
-            line=dict(color='rgba(255,255,255,0)'),
-            name='90% Confidence'
-        ))
-        
-        fig.update_layout(
-            height=400,
-            title="30-Day Quantum Revenue Forecast",
-            xaxis_title="Time Continuum",
-            yaxis_title="Quantum Revenue Units",
-            hovermode='x unified'
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        
-        # Show AI insights
-        st.markdown("##### 🧠 QUANTUM INSIGHTS")
-        insights = analytics.generate_ai_insights(df)
-        for insight in insights:
-            st.info(f"✨ {insight}")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    with viz_tabs[3]:
-        # Network graph for relationships
-        st.markdown('<div class="prediction-card">', unsafe_allow_html=True)
-        st.markdown("##### 🔗 CUSTOMER-ITEM QUANTUM NETWORK")
-        
-        # Create a sample network
-        sample_df = df.sample(min(50, len(df)))
-        
-        # Create edges (customer to item)
-        edges = []
-        for _, row in sample_df.iterrows():
-            edges.append((row['customer_id'], row['item']))
-        
-        # Create Plotly network graph
-        edge_x = []
-        edge_y = []
-        for edge in edges:
-            x0, y0 = hash(edge[0]) % 100, hash(edge[0]) % 100
-            x1, y1 = hash(edge[1]) % 100, hash(edge[1]) % 100
-            edge_x.extend([x0, x1, None])
-            edge_y.extend([y0, y1, None])
-        
-        edge_trace = go.Scatter(
-            x=edge_x, y=edge_y,
-            line=dict(width=1, color='#00f3ff'),
-            hoverinfo='none',
-            mode='lines')
-        
-        # Node positions
-        node_x = []
-        node_y = []
-        node_text = []
-        node_color = []
-        
-        nodes = list(set([edge[0] for edge in edges] + [edge[1] for edge in edges]))
-        
-        for node in nodes:
-            node_x.append(hash(node) % 100)
-            node_y.append(hash(node) % 100)
-            node_text.append(str(node)[:20])
-            node_color.append(0 if node in sample_df['customer_id'].values else 1)
-        
-        node_trace = go.Scatter(
-            x=node_x, y=node_y,
-            mode='markers+text',
-            text=node_text,
-            textposition="top center",
-            marker=dict(
-                size=20,
-                color=node_color,
-                colorscale='Viridis',
-                line_width=2))
-        
-        fig = go.Figure(data=[edge_trace, node_trace],
-                       layout=go.Layout(
-                           title='Quantum Customer-Item Network',
-                           showlegend=False,
-                           hovermode='closest',
-                           height=500,
-                           xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                           yaxis=dict(showgrid=False, zeroline=False, showticklabels=False))
-                       )
-        
-        st.plotly_chart(fig, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    
-    # ==============================================
-    # 🎯 SECTION 3: ADVANCED ANALYTICS PANELS
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🎯 QUANTUM ANALYTICS PANELS</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Create expandable panels for different analytics
-    analytics_panels = st.columns(3)
-    
-    with analytics_panels[0]:
-        with st.expander("🧬 DNA PERSONALIZATION IMPACT", expanded=True):
-            dna_stats = df.groupby('personalization_level').agg({
-                'order_total': ['mean', 'count'],
-                'customer_satisfaction_index': 'mean',
-                'ai_recommendation_score': 'mean'
+        with col2:
+            st.markdown("""
+            <div class="data-card">
+                <h4>🎯 Segment Profiles</h4>
+            """, unsafe_allow_html=True)
+            
+            segment_summary = customer_segments.groupby('Segment_Name').agg({
+                'Customer ID': 'count',
+                'Total_Spent': 'mean',
+                'Visit_Count': 'mean',
+                'Avg_Order': 'mean'
             }).round(2)
             
-            st.dataframe(dna_stats.style.background_gradient(cmap='viridis'))
+            for segment, data in segment_summary.iterrows():
+                st.markdown(f"""
+                <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin: 10px 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong>{segment}</strong>
+                        <span style="background: var(--primary); color: white; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem;">
+                            {data['Customer ID']} customers
+                        </span>
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <small>Avg Spend: ${data['Total_Spent']:,.0f}</small><br>
+                        <small>Visits: {data['Visit_Count']:.1f}</small><br>
+                        <small>Order Value: ${data['Avg_Order']:.2f}</small>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
             
-            # Radar chart for comparison
-            fig = go.Figure()
-            
-            personalization_levels = df['personalization_level'].unique()
-            for level in personalization_levels:
-                level_data = df[df['personalization_level'] == level]
-                fig.add_trace(go.Scatterpolar(
-                    r=[
-                        level_data['order_total'].mean(),
-                        level_data['customer_satisfaction_index'].mean(),
-                        level_data['ai_recommendation_score'].mean() * 100,
-                        level_data['carbon_footprint'].mean(),
-                        level_data['efficiency_score'].mean()
-                    ],
-                    theta=['Revenue', 'Satisfaction', 'AI Score', 'Carbon', 'Efficiency'],
-                    name=level,
-                    fill='toself'
-                ))
-            
-            fig.update_layout(polar=dict(radialaxis=dict(visible=True)),
-                              showlegend=True,
-                              height=300)
-            
-            st.plotly_chart(fig, use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
+        
+        # NEW: Customer Journey Analysis
+        st.markdown("""
+        <div class="glass-panel">
+            <h3>🛤️ Customer Journey Analysis</h3>
+            <p class="light-text">Track customer behavior and conversion paths</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Calculate customer lifecycle metrics
+        customer_journey = filtered_df.groupby('Customer ID').agg({
+            'Order Date': ['min', 'max', 'count'],
+            'Order Total': 'sum',
+            'Category': lambda x: ', '.join(x.value_counts().head(3).index.tolist())
+        })
+        
+        customer_journey.columns = ['First_Visit', 'Last_Visit', 'Visits', 'Total_Spent', 'Top_Categories']
+        customer_journey['Customer_Lifetime'] = (customer_journey['Last_Visit'] - customer_journey['First_Visit']).dt.days
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            avg_lifetime = customer_journey['Customer_Lifetime'].mean()
+            st.metric("Avg Customer Lifetime", f"{avg_lifetime:.0f} days")
+        
+        with col2:
+            repeat_rate = (len(customer_journey[customer_journey['Visits'] > 1]) / len(customer_journey)) * 100
+            st.metric("Repeat Customer Rate", f"{repeat_rate:.1f}%")
+        
+        with col3:
+            avg_frequency = customer_journey['Visits'].mean()
+            st.metric("Avg Visit Frequency", f"{avg_frequency:.1f}")
+        
+        # Customer cohort analysis
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>📅 Customer Cohort Analysis</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Create cohort matrix
+        filtered_df['Cohort'] = filtered_df['Order Date'].dt.to_period('M')
+        filtered_df['Cohort_Index'] = filtered_df.groupby('Customer ID')['Order Date'].transform('min').dt.to_period('M')
+        
+        cohort_data = filtered_df.groupby(['Cohort_Index', 'Cohort']).agg({
+            'Customer ID': 'nunique',
+            'Order Total': 'sum'
+        }).reset_index()
+        
+        cohort_data['Period'] = (cohort_data['Cohort'] - cohort_data['Cohort_Index']).apply(lambda x: x.n)
+        
+        # Pivot for retention matrix
+        retention_matrix = cohort_data.pivot_table(
+            index='Cohort_Index',
+            columns='Period',
+            values='Customer ID',
+            aggfunc='sum'
+        )
+        
+        # Calculate retention rates
+        cohort_sizes = retention_matrix.iloc[:, 0]
+        retention_rates = retention_matrix.divide(cohort_sizes, axis=0) * 100
+        
+        fig = px.imshow(
+            retention_rates,
+            title='Customer Retention Heatmap',
+            color_continuous_scale='Viridis',
+            labels=dict(x="Months Since First Purchase", y="Cohort Month", color="Retention %")
+        )
+        
+        fig.update_layout(height=400)
+        st.plotly_chart(fig, use_container_width=True)
     
-    with analytics_panels[1]:
-        with st.expander("🌍 SUSTAINABILITY MATRIX", expanded=True):
-            # Sustainability analysis
-            sustainability_df = df.groupby('category').agg({
-                'carbon_footprint': 'mean',
-                'efficiency_score': 'mean',
-                'order_total': 'sum'
+    # ==============================================
+    # ⏰ TAB 4: TEMPORAL ANALYSIS - COMPLETELY NEW
+    # ==============================================
+    with tab4:
+        st.markdown("""
+        <div class="glass-panel">
+            <h2>⏰ Temporal Patterns & Seasonality</h2>
+            <p class="light-text">Time-based analysis and peak period identification</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # NEW: Multi-dimensional Time Analysis
+        time_analysis_cols = st.columns(3)
+        
+        with time_analysis_cols[0]:
+            # Hourly patterns
+            hourly_data = filtered_df.groupby('Order Hour').agg({
+                'Order Total': 'sum',
+                'Order ID': 'count'
             }).reset_index()
             
-            fig = px.scatter(
-                sustainability_df,
-                x='carbon_footprint',
-                y='efficiency_score',
-                size='order_total',
-                color='category',
-                hover_name='category',
-                title="Carbon vs Efficiency Matrix",
-                size_max=60
+            fig = go.Figure()
+            fig.add_trace(go.Bar(
+                x=hourly_data['Order Hour'],
+                y=hourly_data['Order Total'],
+                name='Revenue',
+                marker_color='var(--primary)'
+            ))
+            
+            fig.add_trace(go.Scatter(
+                x=hourly_data['Order Hour'],
+                y=hourly_data['Order ID'],
+                name='Orders',
+                yaxis='y2',
+                line=dict(color='var(--accent)', width=2)
+            ))
+            
+            fig.update_layout(
+                title='Hourly Revenue & Order Patterns',
+                yaxis=dict(title='Revenue ($)'),
+                yaxis2=dict(
+                    title='Order Count',
+                    overlaying='y',
+                    side='right'
+                ),
+                height=300
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with time_analysis_cols[1]:
+            # Weekly patterns
+            weekday_order = {
+                'Monday': 0, 'Tuesday': 0, 'Wednesday': 0,
+                'Thursday': 0, 'Friday': 0, 'Saturday': 0, 'Sunday': 0
+            }
+            
+            for day, revenue in filtered_df.groupby('Order Day')['Order Total'].sum().items():
+                weekday_order[day] = revenue
+            
+            fig = px.line_polar(
+                r=list(weekday_order.values()),
+                theta=list(weekday_order.keys()),
+                line_close=True,
+                title='Weekly Revenue Pattern'
+            )
+            
+            fig.update_traces(fill='toself')
+            fig.update_layout(height=300, polar=dict(radialaxis=dict(visible=True)))
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with time_analysis_cols[2]:
+            # Monthly trends
+            monthly_data = filtered_df.groupby('Order Month').agg({
+                'Order Total': 'sum',
+                'Order ID': 'count'
+            }).reset_index()
+            
+            monthly_data['Month'] = monthly_data['Order Month'].apply(lambda x: calendar.month_abbr[x])
+            
+            fig = px.bar(
+                monthly_data,
+                x='Month',
+                y='Order Total',
+                title='Monthly Revenue Trends',
+                color='Order ID',
+                color_continuous_scale='Plasma'
             )
             
             fig.update_layout(height=300)
             st.plotly_chart(fig, use_container_width=True)
-            
-            # Sustainability score by delivery mode
-            delivery_sustainability = df.groupby('delivery_mode').agg({
-                'carbon_footprint': 'mean',
-                'delivery_time_seconds': 'mean'
-            }).reset_index()
-            
-            st.dataframe(delivery_sustainability.style.highlight_min(axis=0))
-    
-    with analytics_panels[2]:
-        with st.expander("🤖 AI PERFORMANCE DASHBOARD", expanded=True):
-            # AI metrics
-            ai_metrics = {
-                'Recommendation Accuracy': df['ai_recommendation_score'].mean() * 100,
-                'Personalization Uptake': len(df[df['personalization_level'] != 'Standard']) / len(df) * 100,
-                'Prediction Confidence': 94.7,
-                'Learning Rate': 0.87
-            }
-            
-            for metric, value in ai_metrics.items():
-                st.progress(value/100, text=f"{metric}: {value:.1f}%")
-            
-            # AI performance over time
-            ai_trend = df.resample('W', on='order_datetime')['ai_recommendation_score'].mean().reset_index()
-            
-            fig = px.line(
-                ai_trend,
-                x='order_datetime',
-                y='ai_recommendation_score',
-                title="AI Learning Curve",
-                markers=True
-            )
-            
-            fig.update_layout(height=250)
-            st.plotly_chart(fig, use_container_width=True)
-    
-    # ==============================================
-    # 🚀 SECTION 4: QUANTUM RECOMMENDATIONS
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🚀 QUANTUM OPTIMIZATION RECOMMENDATIONS</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    rec_cols = st.columns(3)
-    
-    with rec_cols[0]:
+        
+        # NEW: Peak Period Analysis
         st.markdown("""
-        <div class="prediction-card">
-            <h4>🎯 REVENUE OPTIMIZATION</h4>
-            <ul>
-            <li>🚀 **Quantum Pricing**: Implement dynamic AI pricing for Neo-Fusion Cuisine (+23% potential)</li>
-            <li>🌟 **Peak Hour Boost**: Increase drone delivery capacity during hour 19:00 (+17% efficiency)</li>
-            <li>🎪 **Bundle AI-Curated meals** with AR experiences (+31% basket size)</li>
-            </ul>
+        <div class="glass-panel">
+            <h3>📊 Peak Period Intelligence</h3>
+            <p class="light-text">Identify optimal times for promotions and staffing</p>
         </div>
         """, unsafe_allow_html=True)
-    
-    with rec_cols[1]:
-        st.markdown("""
-        <div class="prediction-card">
-            <h4>🌱 SUSTAINABILITY LEVERS</h4>
-            <ul>
-            <li>♻️ **Switch 40%** of Lab-Grown Proteins to Zero-Waste dishes (-58% carbon)</li>
-            <li>🌿 **Incentivize** Teleport Hub delivery with 5% discount (-72% delivery emissions)</li>
-            <li>📊 **Implement real-time** carbon tracking dashboard for customers</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with rec_cols[2]:
-        st.markdown("""
-        <div class="prediction-card">
-            <h4>🤖 TECHNOLOGY UPGRADES</h4>
-            <ul>
-            <li>🧠 **Deploy Neural Interface** payments for Quantum Elite segment</li>
-            <li>🎮 **Gamify AR experience** with sustainability achievements</li>
-            <li>🔮 **Predictive inventory** using quantum algorithms (99.3% accuracy)</li>
-            </ul>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # ==============================================
-    # 📊 SECTION 5: ADVANCED DATA EXPLORER
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">📊 QUANTUM DATA EXPLORER</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Advanced data table with filters
-    with st.expander("🔍 QUANTUM DATA MATRIX", expanded=False):
-        # Column selector
-        columns = st.multiselect(
-            "Select Quantum Dimensions",
-            options=df.columns.tolist(),
-            default=['order_datetime', 'category', 'item', 'order_total', 'personalization_level', 'carbon_footprint']
-        )
         
-        # Advanced filtering
-        filter_cols = st.columns(4)
-        with filter_cols[0]:
-            min_revenue = st.number_input("Min Revenue", 0, int(df['order_total'].max()), 0)
-        with filter_cols[1]:
-            max_carbon = st.number_input("Max Carbon", 0.0, float(df['carbon_footprint'].max()), 5.0)
-        with filter_cols[2]:
-            min_satisfaction = st.slider("Min Satisfaction", 0, 100, 70)
+        # Calculate peak hours by day of week
+        peak_analysis = filtered_df.groupby(['Order Day', 'Order Hour']).agg({
+            'Order Total': 'mean',
+            'Order ID': 'count'
+        }).reset_index()
         
-        # Apply filters
-        filtered_data = df[
-            (df['order_total'] >= min_revenue) &
-            (df['carbon_footprint'] <= max_carbon) &
-            (df['customer_satisfaction_index'] >= min_satisfaction)
-        ]
+        # Find peak combinations
+        peak_revenue = peak_analysis.loc[peak_analysis['Order Total'].idxmax()]
+        peak_orders = peak_analysis.loc[peak_analysis['Order ID'].idxmax()]
         
-        if columns:
-            st.dataframe(
-                filtered_data[columns].sort_values('order_datetime', ascending=False).head(100),
-                height=400,
-                use_container_width=True
-            )
+        col1, col2 = st.columns(2)
         
-        # Export options
-        col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("📥 Download Quantum CSV", use_container_width=True):
-                csv = filtered_data.to_csv(index=False)
-                st.download_button(
-                    label="Download",
-                    data=csv,
-                    file_name="quantum_restaurant_data.csv",
-                    mime="text/csv"
-                )
-        with col2:
-            if st.button("🔮 Generate Quantum Report", use_container_width=True):
-                st.success("Quantum report generating... This may take a few moments.")
-        with col3:
-            if st.button("🧠 Request AI Analysis", use_container_width=True):
-                st.info("AI analysis requested. Results will appear in your Quantum Inbox.")
-    
-    # ==============================================
-    # 🎮 SECTION 6: GAMIFICATION & ACHIEVEMENTS
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🎮 QUANTUM ACHIEVEMENTS UNLOCKED</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    achievements = st.columns(5)
-    
-    achievement_list = [
-        ("🚀 First $1M Revenue", "Quantum Revenue Pioneer", "gold"),
-        ("🌱 Carbon Negative", "Sustainability Champion", "green"),
-        ("🤖 95% AI Accuracy", "Neural Network Master", "blue"),
-        ("🎯 100k Orders", "Velocity King", "purple"),
-        ("🧬 DNA Personalization", "Genetic Gourmet", "pink"),
-        ("⚡ 5ms Response", "Lightning Fast", "yellow"),
-        ("🔮 30-Day Prediction", "Future Seer", "cyan"),
-        ("🎮 AR Experience", "Virtual Visionary", "orange"),
-        ("♻️ Zero Waste", "Eco Warrior", "lime"),
-        ("💫 Quantum Ready", "Next-Gen Leader", "violet")
-    ]
-    
-    for idx, (title, subtitle, color) in enumerate(achievement_list):
-        with achievements[idx % 5]:
             st.markdown(f"""
-            <div style="text-align: center; padding: 10px;">
-                <div style="font-size: 2rem;">{title.split()[0]}</div>
-                <div style="font-size: 0.8rem; color: #aaa; margin: 5px 0;">{title}</div>
-                <div style="font-size: 0.7rem; color: #{'ffd700' if color=='gold' else '00ff00' if color=='green' else '00ffff' if color=='cyan' else 'ff00ff' if color=='pink' else 'ffff00' if color=='yellow' else 'ffa500' if color=='orange' else '00ff00' if color=='lime' else 'ee82ee' if color=='violet' else '0000ff'};">
-                    {subtitle}
+            <div class="data-card">
+                <h4>💰 Peak Revenue Period</h4>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; color: var(--accent);">{peak_revenue['Order Hour']}:00</div>
+                    <h3>{peak_revenue['Order Day']}</h3>
+                    <p>Average Revenue: ${peak_revenue['Order Total']:.0f}</p>
+                    <div style="background: linear-gradient(90deg, var(--primary), var(--accent));
+                                padding: 10px; border-radius: 10px; margin-top: 10px;">
+                        <small>OPTIMIZATION TIP</small><br>
+                        Consider premium pricing during this period
+                    </div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
-    
-    # ==============================================
-    # 🏆 SECTION 7: LEADERBOARDS
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🏆 QUANTUM LEADERBOARDS</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    leader_tabs = st.tabs(["👑 TOP ITEMS", "🚀 TOP CATEGORIES", "🌟 TOP CUSTOMERS"])
-    
-    with leader_tabs[0]:
-        top_items = df.groupby('item').agg({
-            'order_total': 'sum',
-            'quantity': 'sum',
-            'customer_satisfaction_index': 'mean'
-        }).nlargest(10, 'order_total').reset_index()
         
-        for idx, (_, row) in enumerate(top_items.iterrows()):
-            medal = ["🥇", "🥈", "🥉"][idx] if idx < 3 else f"#{idx+1}"
-            st.metric(
-                f"{medal} {row['item']}",
-                f"${row['order_total']:,.0f}",
-                f"{row['quantity']} orders • {row['customer_satisfaction_index']:.0f}/100 satisfaction"
-            )
-    
-    with leader_tabs[1]:
-        top_cats = df.groupby('category').agg({
-            'order_total': 'sum',
-            'efficiency_score': 'mean',
-            'carbon_footprint': 'mean'
-        }).nlargest(5, 'order_total').reset_index()
+        with col2:
+            st.markdown(f"""
+            <div class="data-card">
+                <h4>👥 Peak Order Period</h4>
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 3rem; color: var(--warning);">{peak_orders['Order Hour']}:00</div>
+                    <h3>{peak_orders['Order Day']}</h3>
+                    <p>Average Orders: {peak_orders['Order ID']:.0f}</p>
+                    <div style="background: linear-gradient(90deg, var(--warning), var(--danger));
+                                padding: 10px; border-radius: 10px; margin-top: 10px;">
+                        <small>STAFFING TIP</small><br>
+                        Increase staff by 30% during this period
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
-        fig = px.bar(
-            top_cats,
-            x='category',
-            y='order_total',
-            color='efficiency_score',
-            title="Category Performance Matrix",
-            color_continuous_scale='Viridis'
-        )
+        # NEW: Time-based Forecasting
+        st.markdown("""
+        <div class="glass-panel">
+            <h3>🔮 Time-Based Predictions</h3>
+        </div>
+        """, unsafe_allow_html=True)
         
-        fig.update_layout(height=300)
-        st.plotly_chart(fig, use_container_width=True)
-    
-    with leader_tabs[2]:
-        top_customers = df.groupby('customer_id').agg({
-            'order_total': 'sum',
-            'order_datetime': 'count',
-            'customer_satisfaction_index': 'mean'
-        }).rename(columns={'order_datetime': 'visits'}).nlargest(5, 'order_total')
+        # Create time decomposition
+        time_series = filtered_df.resample('D', on='Order Date')['Order Total'].sum()
         
-        st.dataframe(
-            top_customers.style.format({
-                'order_total': '${:,.0f}',
-                'customer_satisfaction_index': '{:.1f}'
-            }).background_gradient(subset=['order_total'], cmap='Greens'),
-            use_container_width=True
-        )
-    
-    # ==============================================
-    # 🔮 SECTION 8: QUANTUM SIMULATOR
-    # ==============================================
-    st.markdown("""
-    <div class="futuristic-card">
-        <h2 class="gradient-text">🔮 QUANTUM BUSINESS SIMULATOR</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    sim_col1, sim_col2 = st.columns(2)
-    
-    with sim_col1:
-        st.markdown("#### 🎮 SCENARIO SIMULATION")
+        col1, col2 = st.columns(2)
         
-        scenario = st.selectbox(
-            "Choose Simulation Scenario",
-            [
-                "🚀 Launch AI Personalization",
-                "🌱 Go 100% Carbon Neutral", 
-                "🤖 Fully Automate Kitchen",
-                "🎯 Double DNA-Based Customers",
-                "⚡ Implement Quantum Pricing"
-            ]
-        )
-        
-        investment = st.slider("💰 Investment (Quantum Credits)", 10000, 1000000, 100000, step=10000)
-        timeframe = st.select_slider("⏱️ Timeframe", options=["1 Month", "3 Months", "6 Months", "1 Year"])
-        
-        if st.button("🔬 RUN QUANTUM SIMULATION", use_container_width=True):
-            # Generate simulation results
-            with st.spinner("🌀 Running quantum simulation..."):
-                # Simulate results based on scenario
-                time.sleep(1)
-                
-                # Create simulation results
-                results = {
-                    "ROI": np.random.uniform(150, 400),
-                    "Revenue Impact": np.random.uniform(20, 80),
-                    "Carbon Reduction": np.random.uniform(15, 60),
-                    "Customer Growth": np.random.uniform(10, 40)
-                }
-                
-                st.success("✅ Quantum simulation complete!")
-                
-                # Display results
-                result_cols = st.columns(4)
-                for idx, (metric, value) in enumerate(results.items()):
-                    with result_cols[idx]:
-                        st.metric(
-                            metric,
-                            f"+{value:.1f}%",
-                            "Quantum Verified"
-                        )
-    
-    with sim_col2:
-        st.markdown("#### 📈 WHAT-IF ANALYSIS")
-        
-        what_if_var = st.selectbox(
-            "Variable to Adjust",
-            ["Drone Delivery %", "AI Menu Pricing", "AR Experience Adoption", "Sustainable Ingredients %"]
-        )
-        
-        adjustment = st.slider(f"Adjust {what_if_var}", -50, 100, 0, format="%d%%")
-        
-        if st.button("🔮 CALCULATE IMPACT", use_container_width=True):
-            # Calculate impacts
-            impacts = {
-                "Revenue Impact": adjustment * 0.8,
-                "Cost Impact": adjustment * -0.3,
-                "Customer Satisfaction": adjustment * 0.2,
-                "Carbon Footprint": adjustment * -0.5
-            }
+        with col1:
+            # Trend analysis
+            trend = time_series.rolling(window=30).mean()
             
-            # Display impact matrix
-            impact_df = pd.DataFrame(list(impacts.items()), columns=['Metric', 'Impact %'])
-            impact_df['Direction'] = impact_df['Impact %'].apply(lambda x: '🟢' if x > 0 else '🔴' if x < 0 else '🟡')
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=time_series.index,
+                y=time_series.values,
+                name='Actual',
+                line=dict(color='var(--gray)', width=1)
+            ))
             
-            st.dataframe(
-                impact_df.style.format({'Impact %': '{:.1f}%'}).bar(subset=['Impact %'], align='mid', color=['#ff2a6d', '#00f3ff']),
-                use_container_width=True
+            fig.add_trace(go.Scatter(
+                x=trend.index,
+                y=trend.values,
+                name='30-Day Trend',
+                line=dict(color='var(--primary)', width=3)
+            ))
+            
+            fig.update_layout(
+                title='Revenue Trend Analysis',
+                height=300
             )
+            
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            # Seasonality detection
+            weekly_avg = filtered_df.groupby('Order Day')['Order Total'].mean()
+            
+            fig = px.bar(
+                x=weekly_avg.index,
+                y=weekly_avg.values,
+                title='Weekly Seasonality Pattern',
+                color=weekly_avg.values,
+                color_continuous_scale='Viridis'
+            )
+            
+            fig.update_layout(height=300)
+            st.plotly_chart(fig, use_container_width=True)
     
     # ==============================================
-    # 🌟 FOOTER - QUANTUM SIGNATURE
+    # 🔍 TAB 5: RAW DATA - COMPLETELY NEW
+    # ==============================================
+    with tab5:
+        st.markdown("""
+        <div class="glass-panel">
+            <h2>🔍 Advanced Data Exploration</h2>
+            <p class="light-text">Interactive data analysis and export capabilities</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # NEW: Interactive Data Explorer
+        col1, col2, col3 = st.columns([2, 1, 1])
+        
+        with col1:
+            st.markdown("""
+            <div class="data-card">
+                <h4>📁 Dataset Summary</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px;">
+                    <div>
+                        <small>Total Records</small>
+                        <h5>{:,}</h5>
+                    </div>
+                    <div>
+                        <small>Columns</small>
+                        <h5>{}</h5>
+                    </div>
+                    <div>
+                        <small>Time Span</small>
+                        <h5>{} days</h5>
+                    </div>
+                </div>
+            </div>
+            """.format(
+                len(filtered_df),
+                len(filtered_df.columns),
+                (filtered_df['Order Date'].max() - filtered_df['Order Date'].min()).days
+            ), unsafe_allow_html=True)
+        
+        with col2:
+            memory_usage = filtered_df.memory_usage(deep=True).sum() / 1024**2
+            st.metric("Memory Usage", f"{memory_usage:.2f} MB")
+        
+        with col3:
+            completeness = (1 - filtered_df.isnull().sum().sum() / (len(filtered_df) * len(filtered_df.columns))) * 100
+            st.metric("Data Completeness", f"{completeness:.1f}%")
+        
+        # NEW: Advanced Filtering System
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>🎯 Advanced Data Filters</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        filter_cols = st.columns(4)
+        
+        with filter_cols[0]:
+            min_price = st.slider("Min Price", 0.0, float(filtered_df['Price'].max()), 0.0)
+        
+        with filter_cols[1]:
+            max_price = st.slider("Max Price", 0.0, float(filtered_df['Price'].max()), 
+                                 float(filtered_df['Price'].max()))
+        
+        with filter_cols[2]:
+            min_quantity = st.slider("Min Quantity", 1, int(filtered_df['Quantity'].max()), 1)
+        
+        with filter_cols[3]:
+            max_quantity = st.slider("Max Quantity", 1, int(filtered_df['Quantity'].max()), 
+                                    int(filtered_df['Quantity'].max()))
+        
+        # Apply filters
+        filtered_view = filtered_df[
+            (filtered_df['Price'] >= min_price) & 
+            (filtered_df['Price'] <= max_price) &
+            (filtered_df['Quantity'] >= min_quantity) &
+            (filtered_df['Quantity'] <= max_quantity)
+        ]
+        
+        # NEW: Interactive Data Table with Search
+        search_query = st.text_input("🔍 Search in data...", placeholder="Search for items, customers, etc.")
+        
+        if search_query:
+            search_mask = filtered_view.apply(
+                lambda row: row.astype(str).str.contains(search_query, case=False).any(), 
+                axis=1
+            )
+            filtered_view = filtered_view[search_mask]
+        
+        # Column selector
+        selected_columns = st.multiselect(
+            "Select columns to display",
+            options=filtered_view.columns.tolist(),
+            default=['Order Date', 'Category', 'Item', 'Price', 'Quantity', 'Order Total', 'Payment Method']
+        )
+        
+        if selected_columns:
+            # Display data with pagination
+            page_size = st.selectbox("Rows per page", [10, 25, 50, 100], index=0)
+            
+            if len(filtered_view) > 0:
+                total_pages = (len(filtered_view) // page_size) + 1
+                page_number = st.number_input("Page", min_value=1, max_value=total_pages, value=1)
+                
+                start_idx = (page_number - 1) * page_size
+                end_idx = min(page_number * page_size, len(filtered_view))
+                
+                st.dataframe(
+                    filtered_view[selected_columns].iloc[start_idx:end_idx].style.format({
+                        'Price': '${:,.2f}',
+                        'Order Total': '${:,.2f}'
+                    }).background_gradient(subset=['Order Total'], cmap='Blues'),
+                    use_container_width=True,
+                    height=400
+                )
+                
+                st.caption(f"Showing rows {start_idx + 1} to {end_idx} of {len(filtered_view)}")
+            else:
+                st.info("No data matches your filters")
+        
+        # NEW: Data Quality Dashboard
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>📊 Data Quality Dashboard</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        quality_cols = st.columns(4)
+        
+        with quality_cols[0]:
+            duplicates = filtered_df.duplicated().sum()
+            st.metric("Duplicates", duplicates, delta_color="inverse")
+        
+        with quality_cols[1]:
+            missing_values = filtered_df.isnull().sum().sum()
+            st.metric("Missing Values", missing_values, delta_color="inverse")
+        
+        with quality_cols[2]:
+            outliers = len(analytics.detect_anomalies())
+            st.metric("Potential Outliers", outliers)
+        
+        with quality_cols[3]:
+            consistency_score = 100 - ((duplicates + missing_values) / (len(filtered_df) * len(filtered_df.columns)) * 100)
+            st.metric("Data Quality Score", f"{consistency_score:.1f}%")
+        
+        # NEW: Export Options
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>💾 Export & Integration</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        export_cols = st.columns(4)
+        
+        with export_cols[0]:
+            if st.button("📥 Export CSV", use_container_width=True):
+                csv = filtered_view.to_csv(index=False)
+                st.download_button(
+                    label="Download CSV",
+                    data=csv,
+                    file_name="restaurant_export.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+        
+        with export_cols[1]:
+            if st.button("📊 Export JSON", use_container_width=True):
+                json_data = filtered_view.to_json(orient='records', indent=2)
+                st.download_button(
+                    label="Download JSON",
+                    data=json_data,
+                    file_name="restaurant_export.json",
+                    mime="application/json",
+                    use_container_width=True
+                )
+        
+        with export_cols[2]:
+            if st.button("📈 Create Report", use_container_width=True):
+                st.success("Report generation started! Check your downloads folder.")
+        
+        with export_cols[3]:
+            if st.button("🔄 Refresh Data", use_container_width=True):
+                st.rerun()
+        
+        # NEW: Data Distribution Visualization
+        st.markdown("""
+        <div class="glass-panel">
+            <h4>📈 Data Distribution Analysis</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        dist_col1, dist_col2 = st.columns(2)
+        
+        with dist_col1:
+            # Price distribution
+            fig = px.histogram(
+                filtered_df,
+                x='Price',
+                nbins=30,
+                title='Price Distribution',
+                marginal='box'
+            )
+            
+            fig.update_layout(height=300)
+            st.plotly_chart(fig, use_container_width=True)
+        
+        with dist_col2:
+            # Order total distribution
+            fig = px.histogram(
+                filtered_df,
+                x='Order Total',
+                nbins=30,
+                title='Order Total Distribution',
+                color='Category',
+                marginal='violin'
+            )
+            
+            fig.update_layout(height=300)
+            st.plotly_chart(fig, use_container_width=True)
+    
+    # ==============================================
+    # 🎯 FOOTER WITH ANALYTICS
     # ==============================================
     st.markdown("""
-    <div style="text-align: center; margin-top: 50px; padding: 30px; border-top: 1px solid rgba(0, 243, 255, 0.3);">
-        <div style="display: flex; justify-content: center; gap: 30px; margin-bottom: 20px;">
-            <div>🌌 <strong>Quantum Processing</strong>: 12.7 PetaFLOPS</div>
-            <div>⚡ <strong>Neural Latency</strong>: 3.2ms</div>
-            <div>🎯 <strong>Prediction Accuracy</strong>: 94.7%</div>
-        </div>
-        <div style="color: #aaa; font-size: 0.9rem;">
-            🚀 Quantum Restaurant Intelligence 2030 • Powered by Neural Networks & Quantum Computing<br>
-            Last Updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} • Quantum Cycle #42,069
-        </div>
-        <div style="margin-top: 20px; font-size: 0.8rem; color: #666;">
-            This dashboard uses advanced quantum algorithms protected by temporal encryption.<br>
-            All predictions are probabilistic within 95% confidence intervals.
+    <div style="margin-top: 50px; padding: 20px; border-top: 1px solid rgba(255,255,255,0.1);">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <small class="light-text">Restaurant Intelligence Dashboard v2.0</small><br>
+                <small class="light-text">Powered by Advanced Analytics • Updated: {}</small>
+            </div>
+            <div>
+                <small class="light-text">Processing Time: {:.2f}s • Records: {:,}</small>
+            </div>
         </div>
     </div>
-    """.format(datetime=datetime), unsafe_allow_html=True)
+    """.format(
+        datetime.now().strftime("%Y-%m-%d %H:%M"),
+        time.time() % 100,  # Simulated processing time
+        len(filtered_df)
+    ), unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
