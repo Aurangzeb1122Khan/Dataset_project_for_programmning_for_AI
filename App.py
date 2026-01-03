@@ -418,6 +418,75 @@ st.markdown("""
         radial-gradient(circle at 40% 20%, rgba(30, 41, 59, 0.3) 0%, transparent 50%);
     animation: neuralPulse 20s ease-in-out infinite alternate;
 "></div>
+# Add this after your existing CSS but before the neural-bg div
+st.markdown("""
+<style>
+/* ===== PRESENTATION MODE OVERRIDES ===== */
+.presentation-mode {
+    --text-primary: #ffffff !important;
+    --text-secondary: #e2e8f0 !important;
+}
+
+/* Larger text for presentations */
+.presentation-text h1, .presentation-text h2, .presentation-text h3 {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+/* High contrast for charts */
+.js-plotly-plot .plotly .modebar {
+    background: rgba(0,0,0,0.8) !important;
+}
+
+/* Better contrast for tables */
+.stDataFrame th {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    font-size: 1.1rem !important;
+}
+
+.stDataFrame td {
+    color: #ffffff !important;
+    font-size: 1rem !important;
+}
+
+/* Presentation cards */
+.presentation-card {
+    background: rgba(30, 41, 59, 0.95) !important;
+    border: 3px solid #3b82f6 !important;
+    box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* High contrast metric values */
+.presentation-metric .metric-value {
+    font-size: 3.5rem !important;
+    text-shadow: 0 4px 8px rgba(0,0,0,0.5) !important;
+}
+
+/* Better button visibility */
+.stButton > button {
+    font-size: 1.1rem !important;
+    padding: 1rem 2.5rem !important;
+}
+
+/* Increase sidebar text size */
+[data-testid="stSidebar"] {
+    font-size: 1.1rem !important;
+}
+
+[data-testid="stSidebar"] label {
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+/* Presentation toggle button */
+.presentation-toggle {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    z-index: 9999 !important;
+}
+</style>
+""", unsafe_allow_html=True)
 
 <style>
 @keyframes neuralPulse {
@@ -426,6 +495,22 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+    # In your sidebar section, add:
+with st.sidebar:
+    # ... existing sidebar code ...
+    
+    # Add presentation mode toggle
+    presentation_mode = st.checkbox("🎥 Presentation Mode", value=False)
+    
+    if presentation_mode:
+        st.markdown("""
+        <div class="alert-box info">
+            <strong>🎥 Presentation Mode Active</strong><br>
+            • Larger text<br>
+            • Higher contrast<br>
+            • Better visibility
+        </div>
+        """, unsafe_allow_html=True)
 # ==============================================
 # 🧠 ADVANCED DATA GENERATION WITH REALISTIC PATTERNS
 # ==============================================
