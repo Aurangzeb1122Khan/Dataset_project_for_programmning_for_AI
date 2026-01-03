@@ -1,4 +1,3 @@
-
 # ============================================================
 # 🍽️ RESTAURANT SALES ANALYTICS & ML INTELLIGENCE PLATFORM
 # Author: Aurangzeb
@@ -52,22 +51,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ============================================================
-# 📁 FILE PATH MANAGEMENT (RESEARCH-GRADE)
+# 📁 FILE PATH MANAGEMENT
 # ============================================================
 BASE_DIR = Path(__file__).parent
-DATA_FILE = BASE_DIR / "restaurant_sales_featured.csv"
-MODEL_FILE = BASE_DIR / "xgboost_model.pkl"
-CAT_ENCODER_FILE = BASE_DIR / "category_encoder.pkl"
-PAY_ENCODER_FILE = BASE_DIR / "payment_encoder.pkl"
+DATA_FILE = BASE_DIR / "restaurant_sales_cleaned.csv"
+MODEL_FILE = BASE_DIR / "models" / "xgboost_model.pkl"
+CAT_ENCODER_FILE = BASE_DIR / "models" / "category_encoder.pkl"
+PAY_ENCODER_FILE = BASE_DIR / "models" / "payment_encoder.pkl"
 
 # ============================================================
-# 🤖 LOAD MODEL & ENCODERS (SAFE + EXPLICIT)
+# 🤖 LOAD MODEL & ENCODERS
 # ============================================================
 @st.cache_resource
 def load_ml_assets():
     if not MODEL_FILE.exists():
         return None, None, None, "Model file missing"
-
     try:
         model = joblib.load(MODEL_FILE)
         le_category = joblib.load(CAT_ENCODER_FILE)
@@ -79,13 +77,12 @@ def load_ml_assets():
 model, le_category, le_payment, model_error = load_ml_assets()
 
 # ============================================================
-# 📊 LOAD DATASET (NO SILENT FAILURE)
+# 📊 LOAD DATASET
 # ============================================================
 @st.cache_data
 def load_dataset():
     if not DATA_FILE.exists():
         return None, f"Dataset not found at: {DATA_FILE}"
-
     try:
         df = pd.read_csv(DATA_FILE)
         df["order_date"] = pd.to_datetime(df["order_date"])
@@ -149,21 +146,14 @@ if page == "Executive Dashboard":
     col1, col2 = st.columns(2)
 
     with col1:
-        fig = px.bar(
-            df.groupby("category")["order_total"].sum().reset_index(),
-            x="category",
-            y="order_total",
-            title="Revenue by Category"
-        )
+        cat_sales = df.groupby("category")["order_total"].sum().reset_index()
+        fig = px.bar(cat_sales, x="category", y="order_total", title="Revenue by Category", color="order_total")
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
-        fig = px.pie(
-            df["payment_method"].value_counts().reset_index(),
-            values="count",
-            names="payment_method",
-            title="Payment Method Distribution"
-        )
+        pay_counts = df["payment_method"].value_counts().reset_index()
+        pay_counts.columns = ["payment_method", "count"]
+        fig = px.pie(pay_counts, values="count", names="payment_method", title="Payment Method Distribution")
         st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
@@ -180,7 +170,7 @@ elif page == "Data Science Lab":
 
     st.subheader("🔗 Feature Correlation Matrix")
     numeric_cols = ["price", "quantity", "order_total", "hour", "day_of_week"]
-    fig = px.imshow(df[numeric_cols].corr(), text_auto=True)
+    fig = px.imshow(df[numeric_cols].corr(), text_auto=True, aspect="auto", color_continuous_scale="RdBu_r")
     st.plotly_chart(fig, use_container_width=True)
 
 # ============================================================
@@ -209,19 +199,9 @@ elif page == "AI Predictions":
         is_weekend = 1 if day >= 5 else 0
 
     if st.button("🔮 Predict with AI"):
-        features = np.array([[
-            price,
-            quantity,
-            le_category.transform([category])[0],
-            le_payment.transform([payment])[0],
-            day,
-            hour,
-            month,
-            is_weekend
-        ]])
-
+        features = np.array([[price, quantity, le_category.transform([category])[0],
+                              le_payment.transform([payment])[0], day, hour, month, is_weekend]])
         prediction = model.predict(features)[0]
-
         st.success(f"🏆 **Predicted Order Value: ${prediction:.2f}**")
 
 # ============================================================
