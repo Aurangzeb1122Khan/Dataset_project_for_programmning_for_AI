@@ -149,8 +149,8 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("### 📅 Project Information")
-    st.markdown("**University:** Data Science Program")
-    st.markdown("**Course:** Advanced Data Analytics")
+    st.markdown("**University:** Sir Syed CASE insitute of Technology ")
+    st.markdown("**Course:** programming for AI")
     st.markdown("**Date:** " + datetime.now().strftime("%B %d, %Y"))
     
     st.markdown("---")
